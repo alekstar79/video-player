@@ -1,3 +1,5 @@
+import { open, ignore } from './utils'
+
 const VOLUME_ICONS = { up: 'fa-volume-up', down: 'fa-volume-down', off: 'fa-volume-off', mute: 'fa-volume-mute' }
 const FULLSCREEN_ICONS = { compress: 'fa-compress', expand: 'fa-expand' }
 
@@ -185,7 +187,7 @@ export class Player
     document.addEventListener('keydown', e => {
       if (e.code === 'Space') {
         e.preventDefault()
-        this.toggleVideo()
+        ignore(this.toggleVideo())
 
       } else if (e.code === 'ArrowRight') {
         this.video.currentTime += 5
@@ -206,11 +208,13 @@ export class Player
     this.video.volume = target.value / 100
   }
 
-  toggleVideo()
+  async toggleVideo()
   {
-    this.isPlaying = !this.isPlaying
-
     const icon = this.player.querySelector('.j-toggle-video .fas')
+
+    this.video.src ||= URL.createObjectURL(await open('video/*'))
+
+    this.isPlaying = !this.isPlaying
 
     this.player.querySelector('.j-play').style.display = this.isPlaying ? 'block' : 'none'
     this.player.querySelector('.j-pause').style.display = this.isPlaying ? 'none' : 'block'
