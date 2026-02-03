@@ -1,0 +1,57 @@
+.player__panel-playback-content {
+    position: relative;
+    display: flex;
+  }
+  .player__panel-button {
+    display: flex;
+    outline: none;
+    border: 0;
+    font-size: 20px;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+    background: none;
+  }
+  .player__panel-speed-options {
+    position: absolute;
+    list-style: none;
+    padding: 0;
+    left: -40px;
+    bottom: 40px;
+    max-width: 80px;
+    min-width: fit-content;
+    overflow: hidden;
+    opacity: 0;
+    border-radius: 4px;
+    pointer-events: none;
+    background: rgb(241, 241, 241);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, .1);
+    transition: opacity .13s ease;
+
+    &.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    li {
+      cursor: pointer;
+      color: rgba(0, 0, 0, 0.7);
+      font-size: 14px;
+      margin: 0;
+      padding: 3px 10px 3px 10px;
+      transition: all 0.1s ease;
+
+      &:where(:first-child, :last-child) {
+        margin: 0;
+      }
+
+      &:hover {
+        background: #dfdfdf;
+      }
+
+      &.active {
+        color: #fff;
+        background: #3e97fd;
+      }
+    }
+  }

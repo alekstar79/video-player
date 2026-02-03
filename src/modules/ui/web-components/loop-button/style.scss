@@ -1,0 +1,66 @@
+.player__panel-button {
+    display: flex;
+    outline: none;
+    border: 0;
+    font-size: 20px;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+    background: none;
+  }
+  .loop-icon {
+    width: 26px;
+    height: 26px;
+    transition: color 0.2s ease;
+
+    .loop-icon__group {
+      fill: currentColor;
+      filter: drop-shadow(0 0 0.3px currentColor);
+    }
+
+    .loop-icon__number {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .loop-icon__arrows {
+      opacity: 1;
+    }
+  }
+  .loop-icon--none {
+    color: inherit;
+
+    .loop-icon__number {
+      opacity: 0;
+    }
+  }
+  .loop-icon--one {
+    color: #3770b1;
+
+    .loop-icon__number {
+      opacity: 1;
+    }
+  }
+  .loop-icon--all {
+    color: #3770b1;
+
+    .loop-icon__number {
+      opacity: 0;
+    }
+  }
+  .j-toggle-loop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+    }
+
+    &:hover .loop-icon {
+      opacity: 0.8;
+    }
+  }
