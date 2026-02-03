@@ -1,87 +1,86 @@
 /**
- * Timeline UI component
+ * UI component for timeline (view).
  */
 export class Timeline
 {
-  private readonly container: HTMLElement
+  public readonly element: HTMLElement
+
+  private progressElement!: HTMLElement
+  private hoverElement!: HTMLElement
+  private hintElement!: HTMLElement
 
   constructor(container: HTMLElement)
   {
-    this.container = container
+    this.element = container
     this.render()
+    this.initializeElements()
+    this.bindEvents()
   }
 
-  /**
-   * Render timeline HTML structure
-   */
   private render(): void
   {
-    this.container.innerHTML = `
-      <div class="timeline-container">
-        <div class="timeline-hint"></div>
-        <div class="timeline-progress"></div>
-        <div class="timeline-hover"></div>
-        <div class="timeline-background"></div>
-      </div>`
+    this.element.innerHTML = `
+      <div class="player__hint"></div>
+      <div class="player__line player__line--current"></div>
+      <div class="player__line player__line--ghost"></div>
+      <div class="player__line player__line--full"></div>`
   }
 
-  /**
-   * Get the timeline container element
-   */
-  get element(): HTMLElement
+  private initializeElements(): void
   {
-    return this.container
+    this.progressElement = this.element.querySelector('.player__line--current') as HTMLElement
+    this.hoverElement = this.element.querySelector('.player__line--ghost') as HTMLElement
+    this.hintElement = this.element.querySelector('.player__hint') as HTMLElement
   }
 
-  /**
-   * Update progress display
-   */
-  updateProgress(progress: number): void
+  private handleSeek(e: MouseEvent): void
   {
-    const progressElement = this.container.querySelector<HTMLElement>('.timeline-progress')
-    if (progressElement) {
-      progressElement.style.width = `${progress * 100}%`
+    const progress = this.calculateProgress(e)
+    this.element.dispatchEvent(new CustomEvent('timeline-seek', { detail: { progress } }))
+  }
+
+  private handleHover(e: MouseEvent): void
+  {
+    const progress = this.calculateProgress(e)
+    this.element.dispatchEvent(new CustomEvent('timeline-hover', { detail: { progress } }))
+  }
+
+  private bindEvents(): void
+  {
+    this.handleSeek = this.handleSeek.bind(this)
+    this.handleHover = this.handleHover.bind(this)
+
+    this.element.addEventListener('mousedown', this.handleSeek)
+    this.element.addEventListener('mousemove', this.handleHover)
+  }
+
+  private calculateProgress(event: MouseEvent): number
+  {
+    const rect = this.element.getBoundingClientRect()
+    return Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width))
+  }
+
+  public updateProgress(progress: number): void
+  {
+    if (this.progressElement) {
+      this.progressElement.style.width = `${progress * 100}%`
     }
   }
 
-  /**
-   * Update hover preview
-   */
-  updateHoverPreview(progress: number, timeText: string): void
+  public updateHoverPreview(progress: number, timeText: string): void
   {
-    const hoverElement = this.container.querySelector<HTMLElement>('.timeline-hover')
-    const hintElement = this.container.querySelector<HTMLElement>('.timeline-hint')
-
-    if (hoverElement) {
-      hoverElement.style.width = `${progress * 100}%`
+    if (this.hoverElement) {
+      this.hoverElement.style.width = `${progress * 100}%`
     }
-
-    if (hintElement && timeText) {
-      hintElement.textContent = timeText
-      hintElement.style.left = `calc(${progress * 100}% - ${hintElement.offsetWidth / 2}px)`
+    if (this.hintElement) {
+      this.hintElement.textContent = timeText
+      this.hintElement.style.left = `calc(${progress * 100}% - ${this.hintElement.offsetWidth / 2}px)`
     }
   }
 
-  /**
-   * Show hover elements
-   */
-  showHover(): void
+  public destroy(): void
   {
-    const hoverElement = this.container.querySelector<HTMLElement>('.timeline-hover')
-    const hintElement = this.container.querySelector<HTMLElement>('.timeline-hint')
-
-    if (hoverElement) hoverElement.style.opacity = '1'
-    if (hintElement) hintElement.style.opacity = '1'
-  }
-
-  /**
-   * Hide hover elements
-   */
-  hideHover(): void {
-    const hoverElement = this.container.querySelector<HTMLElement>('.timeline-hover')
-    const hintElement = this.container.querySelector<HTMLElement>('.timeline-hint')
-
-    if (hoverElement) hoverElement.style.opacity = '0'
-    if (hintElement) hintElement.style.opacity = '0'
+    this.element.removeEventListener('mousedown', this.handleSeek)
+    this.element.removeEventListener('mousemove', this.handleHover)
   }
 }

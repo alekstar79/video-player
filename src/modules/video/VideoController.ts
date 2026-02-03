@@ -7,12 +7,13 @@ import { Helpers } from '@/core/utils/helpers'
  */
 export class VideoController implements VideoControls
 {
-  private video: VideoElement
+  private readonly video: VideoElement
+  private readonly logging: boolean = false
+
   private eventHandlers: VideoEventHandlers
+  private currentBlobUrl: string | null = null
   private isPlaying: boolean = false
   private hasSource: boolean = false
-  private readonly logging: boolean = false
-  private currentBlobUrl: string | null = null
 
   constructor(
     videoElement: HTMLVideoElement,

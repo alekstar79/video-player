@@ -1,124 +1,77 @@
 /**
- * Speed options UI component
+ * UI component for speed options (view).
  */
 export class SpeedOptions
 {
   private readonly container: HTMLElement
   private readonly onSpeedChange: (speed: number) => void
 
-  private currentSpeed: number
-  private speeds: number[]
-
   constructor(
     container: HTMLElement,
     onSpeedChange: (speed: number) => void,
-    speeds: number[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2],
-    initialSpeed: number = 1
+    speeds: number[],
+    initialSpeed: number
   ) {
     this.container = container
     this.onSpeedChange = onSpeedChange
-    this.speeds = speeds
-    this.currentSpeed = initialSpeed
-    this.render()
+    this.render(speeds, initialSpeed)
     this.bindEvents()
   }
 
-  /**
-   * Render speed options HTML
-   */
-  private render(): void
+  private render(speeds: number[], currentSpeed: number): void
   {
     this.container.innerHTML = `
-      <div class="speed-options-container">
-        ${this.speeds.map(speed => `
-          <div
-            class="speed-option ${speed === this.currentSpeed ? 'active' : ''}" 
-            data-speed="${speed}"
-           >
-             ${speed === 1 ? 'Normal' : `${speed}x`}
-          </div>
-        `).join('')}
-      </div>`
+      ${speeds.map(speed => `
+        <li
+          class="speed-option ${speed === currentSpeed ? 'active' : ''}" 
+          data-speed="${speed}"
+         >
+           ${speed === 1 ? 'Normal' : `${speed}x`}
+        </li>
+      `).join('')}`
   }
 
-  get element()
-  {
-    return this.container
-  }
-
-  /**
-   * Bind event listeners
-   */
   private bindEvents(): void
   {
-    this.container.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement
+    this.handleOptionClick = this.handleOptionClick.bind(this)
 
-      if (target.classList.contains('speed-option')) {
-        this.setSpeed(parseFloat(target.dataset.speed || '1'))
-      }
-    })
+    this.container.addEventListener('click', this.handleOptionClick)
   }
 
-  /**
-   * Set current speed and update UI
-   */
-  setSpeed(speed: number): void
+  private handleOptionClick(event: MouseEvent): void
   {
-    if (!this.speeds.includes(speed)) return
+    const target = event.target as HTMLElement
 
-    this.currentSpeed = speed
-    this.onSpeedChange(speed)
-    this.updateActiveOption()
+    if (target.classList.contains('speed-option')) {
+      this.onSpeedChange(parseFloat(target.dataset.speed || '1'))
+      this.hide()
+    }
   }
 
-  /**
-   * Update active option in UI
-   */
-  private updateActiveOption(): void
+  public update(speed: number): void
   {
     this.container.querySelectorAll<HTMLElement>('.speed-option').forEach(option => {
-      option.classList.toggle('active', parseFloat(option.dataset.speed || '1') === this.currentSpeed)
+      option.classList.toggle('active', parseFloat(option.dataset.speed || '1') === speed)
     })
   }
 
-  /**
-   * Show speed options
-   */
-  show(): void
+  public show(): void
   {
     this.container.classList.add('show')
   }
 
-  /**
-   * Hide speed options
-   */
-  hide(): void
+  public hide(): void
   {
     this.container.classList.remove('show')
   }
 
-  /**
-   * Toggle visibility
-   */
-  toggle(): void
+  public toggle(): void
   {
     this.container.classList.toggle('show')
   }
 
-  /**
-   * Check if options are visible
-   */
-  isVisible(): boolean
+  public destroy(): void
   {
-    return this.container.classList.contains('show')
-  }
-
-  /**
-   * Get current speed
-   */
-  getCurrentSpeed(): number
-  {
-    return this.currentSpeed
+    this.container.removeEventListener('click', this.handleOptionClick)
   }
 }
