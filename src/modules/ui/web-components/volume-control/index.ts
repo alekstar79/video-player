@@ -1,12 +1,6 @@
 import { BaseComponent } from '../BaseComponent'
+import template from './template.html?raw'
 import styles from './style.scss?raw'
-
-const template = `
-  <button class="player__panel-button" title="Volume">
-    <em class="fas fa-volume-up player__volume-icon"></em>
-    <input type="range" class="player__volume j-volume-input">
-  </button>
-`
 
 export default class VolumeControlComponent extends BaseComponent
 {

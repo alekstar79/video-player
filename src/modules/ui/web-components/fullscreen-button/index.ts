@@ -1,11 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
-import styles from './style.scss?raw'
 
-const template = `
-  <button class="player__panel-button j-fullscreen" title="Fullscreen">
-    <em class="fas fa-expand"></em>
-  </button>
-`
+import template from './template.html?raw'
+import styles from './style.scss?raw'
 
 export default class FullscreenButtonComponent extends BaseComponent
 {

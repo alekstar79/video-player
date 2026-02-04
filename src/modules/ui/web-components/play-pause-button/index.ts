@@ -1,11 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
-import styles from './style.scss?raw'
 
-const template = `
-  <button class="player__panel-button j-toggle-video" title="Play/Pause">
-    <em class="fas fa-play"></em>
-  </button>
-`
+import template from './template.html?raw'
+import styles from './style.scss?raw'
 
 export default class PlayPauseButtonComponent extends BaseComponent
 {

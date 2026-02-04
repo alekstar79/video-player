@@ -2,45 +2,9 @@ import type { ControlsVisibility, LoopMode } from '@/core/types'
 
 import { BaseComponent } from '../BaseComponent'
 import { VideoPlayer } from '@/app/VideoPlayer'
+
+import template from './template.html?raw'
 import styles from './style.scss?raw'
-
-const template = `
-  <div class="player">
-    <em class="fas fa-pause player__main-icon j-pause"></em>
-    <em class="fas fa-play player__main-icon j-play"></em>
-
-    <video class="player__video"></video>
-
-    <button class="player__source-nav player__source-nav--prev j-source-prev" title="Previous source">
-      <em class="fas fa-chevron-left fa-lg"></em>
-    </button>
-    <button class="player__source-nav player__source-nav--next j-source-next" title="Next source">
-      <em class="fas fa-chevron-right fa-lg"></em>
-    </button>
-
-    <div class="player__panel">
-      <timeline-control></timeline-control>
-
-      <div class="player__panel-block">
-        <skip-button direction="backward" seconds="5"></skip-button>
-        <button class="player__panel-button j-open-file" title="Open video file">
-          <em class="fas fa-folder-open"></em>
-        </button>
-        <loop-button></loop-button>
-        <play-pause-button></play-pause-button>
-        <skip-button direction="forward" seconds="5"></skip-button>
-        <volume-control></volume-control>
-        <time-display></time-display>
-      </div>
-
-      <div class="player__panel-block">
-        <speed-options></speed-options>
-        <pip-button></pip-button>
-        <fullscreen-button></fullscreen-button>
-      </div>
-    </div>
-  </div>
-`
 
 export default class VideoPlayerComponent extends BaseComponent
 {

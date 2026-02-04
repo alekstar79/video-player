@@ -1,11 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
-import styles from './style.scss?raw'
 
-const template = `
-  <button class="player__panel-button" title="Skip">
-    <em class="fas"></em>
-  </button>
-`
+import template from '/template.html?raw'
+import styles from './style.scss?raw'
 
 export default class SkipButtonComponent extends BaseComponent
 {

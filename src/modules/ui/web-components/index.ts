@@ -1,27 +1,28 @@
-import VideoPlayerComponent from './video-player'
-import VolumeControlComponent from './volume-control'
-import TimelineComponent from './timeline'
-import TimeDisplayComponent from './time-display'
-import SpeedOptionsComponent from './speed-options'
+import FullscreenButtonComponent from './fullscreen-button'
+import LoopButtonComponent from './loop-button'
+import PipButtonComponent from './pip-button'
 import PlayPauseButtonComponent from './play-pause-button'
 import SkipButtonComponent from './skip-button'
-import LoopButtonComponent from './loop-button'
-import FullscreenButtonComponent from './fullscreen-button'
-import PipButtonComponent from './pip-button'
+import SpeedOptionsComponent from './speed-options'
+import TimeDisplayComponent from './time-display'
+import TimelineComponent from './timeline'
+import VolumeControlComponent from './volume-control'
+import VideoPlayerComponent from './video-player'
 
-customElements.define('video-player', VideoPlayerComponent)
-customElements.define('volume-control', VolumeControlComponent)
-customElements.define('timeline-control', TimelineComponent)
-customElements.define('time-display', TimeDisplayComponent)
-customElements.define('speed-options', SpeedOptionsComponent)
-customElements.define('play-pause-button', PlayPauseButtonComponent)
-customElements.define('skip-button', SkipButtonComponent)
-customElements.define('loop-button', LoopButtonComponent)
-customElements.define('fullscreen-button', FullscreenButtonComponent)
-customElements.define('pip-button', PipButtonComponent)
+export function registerComponents() {
+  customElements.define('fullscreen-button', FullscreenButtonComponent)
+  customElements.define('loop-button', LoopButtonComponent)
+  customElements.define('pip-button', PipButtonComponent)
+  customElements.define('play-pause-button', PlayPauseButtonComponent)
+  customElements.define('skip-button', SkipButtonComponent)
+  customElements.define('speed-options', SpeedOptionsComponent)
+  customElements.define('time-display', TimeDisplayComponent)
+  customElements.define('timeline-control', TimelineComponent)
+  customElements.define('volume-control', VolumeControlComponent)
+  customElements.define('video-player', VideoPlayerComponent)
+}
 
-export function waitForElements(): Promise<CustomElementConstructor[]>
-{
+export function whenDefined(): Promise<CustomElementConstructor[]> {
   return Promise.all([
     customElements.whenDefined('volume-control'),
     customElements.whenDefined('timeline-control'),
@@ -35,15 +36,15 @@ export function waitForElements(): Promise<CustomElementConstructor[]>
   ])
 }
 
-export {
-  VideoPlayerComponent,
-  VolumeControlComponent,
-  TimelineComponent,
-  TimeDisplayComponent,
-  SpeedOptionsComponent,
-  PlayPauseButtonComponent,
-  SkipButtonComponent,
-  LoopButtonComponent,
+export type {
   FullscreenButtonComponent,
+  LoopButtonComponent,
+  PlayPauseButtonComponent,
   PipButtonComponent,
+  SkipButtonComponent,
+  SpeedOptionsComponent,
+  TimeDisplayComponent,
+  TimelineComponent,
+  VolumeControlComponent,
+  VideoPlayerComponent,
 }

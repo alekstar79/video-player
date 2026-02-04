@@ -1,8 +1,8 @@
 import { BaseComponent } from '../BaseComponent'
 import { Helpers } from '@/core/utils/helpers'
-import styles from './style.scss?raw'
 
-const template = `<span class="j-duration">0:00 / 0:00</span>`
+import template from './template.html?raw'
+import styles from './style.scss?raw'
 
 export default class TimeDisplayComponent extends BaseComponent
 {

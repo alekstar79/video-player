@@ -1,15 +1,8 @@
 import { BaseComponent } from '../BaseComponent'
 import { Helpers } from '@/core/utils/helpers'
-import styles from './style.scss?raw'
 
-const template = `
-  <div class="player__lines j-line">
-    <div class="player__hint j-hint"></div>
-    <div class="player__line player__line--current j-line-current"></div>
-    <div class="player__line player__line--ghost j-line-ghost"></div>
-    <div class="player__line player__line--full"></div>
-  </div>
-`
+import template from './template.html?raw'
+import styles from './style.scss?raw'
 
 export default class TimelineComponent extends BaseComponent
 {
