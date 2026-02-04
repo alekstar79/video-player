@@ -33,6 +33,7 @@ export function whenDefined(): Promise<CustomElementConstructor[]> {
     customElements.whenDefined('timeline-control'),
     customElements.whenDefined('time-display'),
     customElements.whenDefined('volume-control'),
+    customElements.whenDefined('video-player'),
   ])
 }
 

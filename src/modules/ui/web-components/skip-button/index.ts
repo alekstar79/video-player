@@ -1,6 +1,6 @@
 import { BaseComponent } from '../BaseComponent'
 
-import template from '/template.html?raw'
+import template from './template.html?raw'
 import styles from './style.scss?inline'
 
 export default class SkipButtonComponent extends BaseComponent
