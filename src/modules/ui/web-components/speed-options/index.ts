@@ -1,7 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
 
 import template from './template.html?raw'
-import styles from './style.scss?raw'
+import styles from './style.scss?inline'
 
 export default class SpeedOptionsComponent extends BaseComponent
 {

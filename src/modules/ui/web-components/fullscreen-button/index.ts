@@ -1,7 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
 
 import template from './template.html?raw'
-import styles from './style.scss?raw'
+import styles from './style.scss?inline'
 
 export default class FullscreenButtonComponent extends BaseComponent
 {
@@ -22,6 +22,8 @@ export default class FullscreenButtonComponent extends BaseComponent
 
   public setFullscreen(isFullscreen: boolean): void
   {
-    this.icon.className = isFullscreen ? 'fas fa-compress' : 'fas fa-expand'
+    this.icon.className = isFullscreen
+      ? 'fas fa-compress'
+      : 'fas fa-expand'
   }
 }

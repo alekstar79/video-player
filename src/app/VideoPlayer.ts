@@ -21,8 +21,9 @@ import {
  */
 export class VideoPlayer
 {
+  private readonly container: HTMLElement
+
   private config: VideoPlayerConfig
-  private container: HTMLElement
   private playerElement!: HTMLElement
   private events: EventEmitter<PlayerEventMap>
   private controlsVisibility: Required<ControlsVisibility>

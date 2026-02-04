@@ -24,15 +24,15 @@ export function registerComponents() {
 
 export function whenDefined(): Promise<CustomElementConstructor[]> {
   return Promise.all([
-    customElements.whenDefined('volume-control'),
-    customElements.whenDefined('timeline-control'),
-    customElements.whenDefined('time-display'),
-    customElements.whenDefined('speed-options'),
+    customElements.whenDefined('fullscreen-button'),
+    customElements.whenDefined('loop-button'),
+    customElements.whenDefined('pip-button'),
     customElements.whenDefined('play-pause-button'),
     customElements.whenDefined('skip-button'),
-    customElements.whenDefined('loop-button'),
-    customElements.whenDefined('fullscreen-button'),
-    customElements.whenDefined('pip-button'),
+    customElements.whenDefined('speed-options'),
+    customElements.whenDefined('timeline-control'),
+    customElements.whenDefined('time-display'),
+    customElements.whenDefined('volume-control'),
   ])
 }
 

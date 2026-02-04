@@ -1,11 +1,7 @@
 import { BaseComponent } from '../BaseComponent'
-import styles from './style.scss?raw'
 
-const template = `
-  <button class="player__panel-button j-pic-in-pic" title="Picture in Picture">
-    <span class="material-icons">picture_in_picture_alt</span>
-  </button>
-`
+import template from './template.html?raw'
+import styles from './style.scss?inline'
 
 export default class PipButtonComponent extends BaseComponent
 {
