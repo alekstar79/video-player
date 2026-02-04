@@ -1,6 +1,7 @@
-import { VideoPlayer } from './app/VideoPlayer'
 import './styles/main.scss'
 import './styles/player.scss'
+
+import { VideoPlayer } from './app/VideoPlayer'
 
 const errorHandler = (error: Error | any) => {
   console.error('Failed to initialize video player:', error)
