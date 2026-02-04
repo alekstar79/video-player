@@ -1,15 +1,5 @@
-import { Helpers } from '@/core/utils/helpers'
 import { VolumeControlComponent } from '@/modules/ui/web-components'
-
-/**
- * Volume control configuration
- */
-export interface VolumeControllerConfig {
-  min?: number;
-  max?: number;
-  step?: number;
-  showSliderOnHover?: boolean;
-}
+import { Helpers } from '@/core/utils/helpers'
 
 /**
  * Controller for volume management and UI
@@ -17,7 +7,6 @@ export interface VolumeControllerConfig {
 export class VolumeController
 {
   private component: VolumeControlComponent
-  private config: Required<VolumeControllerConfig>
 
   private readonly onVolumeChange: (volume: number) => void
   private readonly onMuteToggle: () => void
@@ -27,20 +16,11 @@ export class VolumeController
     callbacks: {
       onVolumeChange: (volume: number) => void;
       onMuteToggle: () => void;
-    },
-    config: VolumeControllerConfig = {}
+    }
   ) {
     this.component = component
     this.onVolumeChange = callbacks.onVolumeChange
     this.onMuteToggle = callbacks.onMuteToggle
-
-    this.config = {
-      min: config.min ?? 0,
-      max: config.max ?? 1,
-      step: config.step ?? 0.01,
-      showSliderOnHover: config.showSliderOnHover ?? true
-    }
-
     this.bindEventListeners()
   }
 

@@ -35,23 +35,6 @@ export interface VideoPlayerConfig {
   aspectRatio?: string;       // '16:9', '4:3', '21:9'
 }
 
-// export interface VideoSource {
-//   src: string;
-//   type?: string;
-// }
-
-// export interface PlayerState {
-//   isPlaying: boolean;
-//   isMuted: boolean;
-//   volume: number;
-//   playbackRate: number;
-//   currentTime: number;
-//   duration: number;
-//   isFullscreen: boolean;
-//   currentSourceIndex: number;
-//   sources: string[];
-// }
-
 export interface TimeUpdateEvent {
   currentTime: number;
   duration: number;

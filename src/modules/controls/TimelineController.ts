@@ -1,14 +1,6 @@
 import { TimelineComponent } from '@/modules/ui/web-components'
 
 /**
- * Timeline control configuration
- */
-export interface TimelineControllerConfig {
-  showHoverPreview?: boolean
-  showTimeHint?: boolean
-}
-
-/**
  * Controller for video timeline and seeking
  */
 export class TimelineController
