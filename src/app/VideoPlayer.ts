@@ -348,10 +348,10 @@ export class VideoPlayer
     const controlElements = ['.player__panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
-      const elements = this.container.querySelectorAll<HTMLElement>(selector)
-      elements.forEach(element => {
-        element.style.display = 'none'
-      })
+      this.container.querySelectorAll<HTMLElement>(selector)
+        .forEach(element => {
+          element.style.display = 'none'
+        })
     })
 
     // Also hide cursor for video element
@@ -369,10 +369,10 @@ export class VideoPlayer
     const controlElements = ['.player__panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
-      const elements = this.container.querySelectorAll<HTMLElement>(selector)
-      elements.forEach(element => {
-        element.style.display = ''
-      })
+      this.container.querySelectorAll<HTMLElement>(selector)
+        .forEach(element => {
+          element.style.display = ''
+        })
     })
 
     // Restore cursor for video element
