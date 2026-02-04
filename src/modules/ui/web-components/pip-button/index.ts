@@ -11,15 +11,18 @@ export default class PipButtonComponent extends BaseComponent
   {
     super()
     this.render(template, styles)
-    this.button = this.getElement('.j-pic-in-pic') as HTMLButtonElement
+    this.button = this.shadow.querySelector('.j-pic-in-pic') as HTMLButtonElement
 
     this.button.addEventListener('click', () => {
-      this.emit('togglepip')
+      this.emit('click')
     })
   }
 
-  public setEnabled(enabled: boolean): void
-  {
-    this.button.disabled = !enabled
+  set disabled(value: boolean) {
+    this.button.disabled = value
+  }
+
+  get disabled(): boolean {
+    return this.button.disabled
   }
 }

@@ -13,8 +13,8 @@ export default class SpeedOptionsComponent extends BaseComponent
     super()
     this.render(template, styles)
 
-    this.speedButton = this.getElement('.j-speed')!
-    this.speedOptions = this.getElement('.j-speed-options')!
+    this.speedButton = this.shadow.querySelector('.j-speed')!
+    this.speedOptions = this.shadow.querySelector('.j-speed-options')!
 
     this.speedButton.addEventListener('click', () => {
       this.speedOptions.classList.toggle('show')
@@ -25,13 +25,13 @@ export default class SpeedOptionsComponent extends BaseComponent
 
       if (target.tagName === 'LI') {
         const speed = parseFloat(target.dataset.speed || '1')
-        this.emit('speedchange', speed)
+        this.emit('speedchange', { speed })
         this.speedOptions.classList.remove('show')
       }
     })
   }
 
-  public update(speed: number): void
+  public updateActiveOption(speed: number): void
   {
     this.speedOptions.querySelectorAll('li').forEach(option => {
       option.classList.toggle('active', parseFloat(option.dataset.speed || '1') === speed)

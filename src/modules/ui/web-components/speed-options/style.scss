@@ -1,8 +1,10 @@
-.player__panel-playback-content {
+.player__panel {
+  &-playback-content {
     position: relative;
     display: flex;
   }
-  .player__panel-button {
+
+  &-button {
     display: flex;
     outline: none;
     border: 0;
@@ -12,7 +14,8 @@
     padding: 0;
     background: none;
   }
-  .player__panel-speed-options {
+
+  &-speed-options {
     position: absolute;
     list-style: none;
     padding: 0;
@@ -55,3 +58,4 @@
       }
     }
   }
+}

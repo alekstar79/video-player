@@ -1,7 +1,8 @@
-import './styles/main.scss'
-import './styles/player.scss'
+import type { VideoPlayer } from './app/VideoPlayer'
 
-import { VideoPlayer } from './app/VideoPlayer'
+import { VideoPlayerComponent, registerComponents } from './modules/ui/web-components'
+
+import './styles/main.scss'
 
 const errorHandler = (error: Error | any) => {
   console.error('Failed to initialize video player:', error)
@@ -125,53 +126,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       return
     }
 
-    // Create player container
-    const playerContainer = document.createElement('div')
-    playerContainer.className = 'video-player-container'
+    // Register all web components
+    registerComponents()
+
     appElement.innerHTML = ''
-    appElement.appendChild(playerContainer)
 
-    // Initialize video player
-    const player = new VideoPlayer({
-      container: playerContainer,
+    // Create video-player component
+    const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
 
-      initialSources: [
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-        getVideoUrl('Synthwave.mp4'),
-        getVideoUrl('GalaxyNebula.mp4')
-      ],
+    // Set configuration
+    videoPlayer.initialSources = [
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      getVideoUrl('Synthwave.mp4'),
+      getVideoUrl('GalaxyNebula.mp4')
+    ]
+    videoPlayer.maxWidth = '960px'
+    videoPlayer.aspectRatio = '16:9'
+    videoPlayer.loop = true
+    videoPlayer.loopMode = 'none'
+    videoPlayer.muted = true
+    videoPlayer.autoPlay = false
+    videoPlayer.initialVolume = 0.7
+    videoPlayer.playbackRate = 1.0
+    videoPlayer.showControls = true
+    videoPlayer.logging = false
+    videoPlayer.controlsVisibility = {
+      showOpenFile: true,
+      showPlayPause: true,
+      showSkipButtons: true,
+      showVolume: true,
+      showTimeDisplay: true,
+      showSpeed: true,
+      showPip: true,
+      showFullscreen: true,
+      showLoop: true,
+      showTimeline: true
+    }
 
-      // width: '100%',        // Occupies the entire available width
-      maxWidth: '960px',       // but no more than 1200px
-      aspectRatio: '16:9',     // Aspect ratio is 16:9
+    appElement.appendChild(videoPlayer)
 
-      // Or you can set fixed sizes:
-      // width: 800,
-      // height: 450,
-
-      loop: true,
-      loopMode: 'none', // none | one | all
-
-      muted: true,
-      autoPlay: false,
-      initialVolume: 0.7,
-      playbackRate: 1.0,
-      showControls: true,
-      logging: false,
-
-      controlsVisibility: {
-        showOpenFile: true,     // Show/Hide the file open button
-        showPlayPause: true,    // Show/Hide the play/pause button
-        showSkipButtons: true,  // Show/Hide the rewind buttons
-        showVolume: true,       // Show/Hide the volume button
-        showTimeDisplay: true,  // Show/Hide the time display
-        showSpeed: true,        // Show/Hide the speed selection
-        showPip: true,          // Show/Hide the picture-in-picture button
-        showFullscreen: true,   // Show/Hide the fullscreen button
-        showLoop: true,         // Show/Hide the loop button
-        showTimeline: true      // Show/Hide the timeline bar
-      }
-    })
+    const player = await videoPlayer.whenReady()
 
     player.on('loopmodechanged', (mode) => {
       console.log('Loop mode changed to:', mode)

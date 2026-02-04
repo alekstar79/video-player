@@ -1,20 +1,25 @@
+import { ControlsVisibility, VideoPlayerConfig, PlayerEventMap, TimeUpdateEvent, LoopMode } from '@/core/types'
+
 import { EventEmitter } from '@/core/events/EventEmitter'
+import { FullscreenController } from '@/modules/controls/FullscreenController'
+import { PlaybackController } from '@/modules/controls/PlaybackController'
+import { TimelineController } from '@/modules/controls/TimelineController'
 import { VideoController } from '@/modules/video/VideoController'
 import { VolumeController } from '@/modules/controls/VolumeController'
-import { PlaybackController } from '@/modules/controls/PlaybackController'
-import { FullscreenController } from '@/modules/controls/FullscreenController'
-import { TimelineController } from '@/modules/controls/TimelineController'
-import { PlayerTemplate } from '@/modules/ui/templates/player-template'
 import { Helpers } from '@/core/utils/helpers'
 
 import {
-  ControlsVisibility,
-  VideoPlayerConfig,
-  PlayerEventMap,
-  TimeUpdateEvent,
-  VolumeChangeEvent,
-  LoopMode
-} from '@/core/types'
+  FullscreenButtonComponent,
+  LoopButtonComponent,
+  PipButtonComponent,
+  PlayPauseButtonComponent,
+  SkipButtonComponent,
+  SpeedOptionsComponent,
+  TimeDisplayComponent,
+  TimelineComponent,
+  VolumeControlComponent,
+  whenDefined
+} from '@/modules/ui/web-components'
 
 /**
  * Main Video Player class - orchestrates all components
@@ -22,6 +27,7 @@ import {
 export class VideoPlayer
 {
   private readonly container: HTMLElement
+  private readonly root: Document | ShadowRoot
 
   private config: VideoPlayerConfig
   private playerElement!: HTMLElement
@@ -35,6 +41,13 @@ export class VideoPlayer
   private playbackController!: PlaybackController
   private fullscreenController!: FullscreenController
   private timelineController!: TimelineController
+
+  // UI Components
+  private playPauseButton!: PlayPauseButtonComponent
+  private loopButton!: LoopButtonComponent
+  private fullscreenButton!: FullscreenButtonComponent
+  private pipButton!: PipButtonComponent
+  private timeDisplay!: TimeDisplayComponent
 
   // State
   private sources: string[] = []
@@ -51,10 +64,11 @@ export class VideoPlayer
 
   public logging: boolean = false
 
-  constructor(config: VideoPlayerConfig)
+  constructor(config: VideoPlayerConfig, root: Document | ShadowRoot = document)
   {
     this.config = config
     this.container = config.container
+    this.root = root
     this.isShowControls = config.showControls ?? true
     this.logging = Boolean(config.logging)
     this.events = new EventEmitter()
@@ -95,9 +109,14 @@ export class VideoPlayer
   private async initializePlayer(): Promise<void>
   {
     try {
-      // Render player HTML with original classes
-      this.renderPlayerTemplate()
+      // Wait for the components to be ready
+      await whenDefined()
 
+      this.playerElement = this.root.querySelector('.player') as HTMLElement
+
+      if (!this.playerElement) {
+        throw new Error('Player element not found after rendering template')
+      }
       // Applying dimensions to the container
       this.applyContainerSizes()
 
@@ -128,7 +147,6 @@ export class VideoPlayer
       }
     } catch (error) {
       console.error('Failed to initialize video player:', error)
-      throw error
     }
   }
 
@@ -215,17 +233,17 @@ export class VideoPlayer
 
     Object.entries({
       showOpenFile: '.j-open-file',
-      showPlayPause: '.j-toggle-video',
-      showSkipButtons: '.j-skip-backward, .j-skip-forward',
-      showVolume: '.j-toggle-volume',
-      showTimeDisplay: '.j-duration',
-      showSpeed: '.j-speed',
-      showPip: '.j-pic-in-pic',
-      showFullscreen: '.j-fullscreen',
-      showLoop: '.j-toggle-loop',
-      showTimeline: '.j-line'
+      showPlayPause: 'play-pause-button',
+      showSkipButtons: 'skip-button',
+      showVolume: 'volume-control',
+      showTimeDisplay: 'time-display',
+      showSpeed: 'speed-options',
+      showPip: 'pip-button',
+      showFullscreen: 'fullscreen-button',
+      showLoop: 'loop-button',
+      showTimeline: 'timeline-control'
     }).forEach(([key, selector]) => {
-      const elements = this.container.querySelectorAll<HTMLElement>(selector)
+      const elements = this.root.querySelectorAll<HTMLElement>(selector)
       const isVisible = this.controlsVisibility[key as keyof ControlsVisibility]
 
       elements.forEach(element => {
@@ -240,9 +258,7 @@ export class VideoPlayer
   private async loadInitialSources(): Promise<void>
   {
     if (this.sources.length === 0) {
-      if (this.logging) {
-        console.log('No initial sources provided')
-      }
+      if (this.logging) console.log('No initial sources provided')
       return
     }
 
@@ -348,14 +364,14 @@ export class VideoPlayer
     const controlElements = ['.player__panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
-      this.container.querySelectorAll<HTMLElement>(selector)
+      this.root.querySelectorAll<HTMLElement>(selector)
         .forEach(element => {
           element.style.display = 'none'
         })
     })
 
     // Also hide cursor for video element
-    const videoElement = this.container.querySelector<HTMLElement>('.player__video')
+    const videoElement = this.root.querySelector<HTMLElement>('.player__video')
     if (videoElement) {
       videoElement.style.cursor = 'none'
     }
@@ -369,14 +385,14 @@ export class VideoPlayer
     const controlElements = ['.player__panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
-      this.container.querySelectorAll<HTMLElement>(selector)
+      this.root.querySelectorAll<HTMLElement>(selector)
         .forEach(element => {
           element.style.display = ''
         })
     })
 
     // Restore cursor for video element
-    const videoElement = this.container.querySelector<HTMLElement>('.player__video')
+    const videoElement = this.root.querySelector<HTMLElement>('.player__video')
     if (videoElement) {
       videoElement.style.cursor = ''
     }
@@ -386,27 +402,23 @@ export class VideoPlayer
   }
 
   /**
-   * Render player HTML structure with original classes
-   */
-  private renderPlayerTemplate(): void
-  {
-    this.container.innerHTML = PlayerTemplate.generate()
-    this.playerElement = this.container.querySelector('.player') as HTMLElement
-
-    if (!this.playerElement) {
-      throw new Error('Player element not found after rendering template')
-    }
-  }
-
-  /**
    * Initialize all controllers with correct element selectors
    */
   private initializeControllers(): void
   {
-    const videoElement = this.container.querySelector<HTMLVideoElement>('.player__video')
-    if (!videoElement) {
-      throw new Error('Video element not found')
-    }
+    const videoElement = this.root.querySelector<HTMLVideoElement>('.player__video')
+    if (!videoElement) throw new Error('Video element not found')
+
+    // Store component instances
+    this.playPauseButton = this.root.querySelector('play-pause-button')!
+    this.loopButton = this.root.querySelector('loop-button')!
+    this.fullscreenButton = this.root.querySelector('fullscreen-button')!
+    this.pipButton = this.root.querySelector('pip-button')!
+    this.timeDisplay = this.root.querySelector('time-display')!
+
+    const volumeControl = this.root.querySelector<VolumeControlComponent>('volume-control')!
+    const speedOptions = this.root.querySelector<SpeedOptionsComponent>('speed-options')!
+    const timelineControl = this.root.querySelector<TimelineComponent>('timeline-control')!
 
     // Initialize Video Controller
     this.videoController = new VideoController(
@@ -425,21 +437,16 @@ export class VideoPlayer
     )
 
     // Initialize Source Navigation Buttons
-    this.sourcePrevButton = this.container.querySelector('.j-source-prev') as HTMLElement
-    this.sourceNextButton = this.container.querySelector('.j-source-next') as HTMLElement
+    this.sourcePrevButton = this.root.querySelector('.j-source-prev') as HTMLElement
+    this.sourceNextButton = this.root.querySelector('.j-source-next') as HTMLElement
 
     if (this.sourcePrevButton && this.sourceNextButton) {
       this.updateSourceNavigationVisibility()
     }
 
-    // Initialize Volume Controller - pass the button element directly
-    const volumeButton = this.container.querySelector<HTMLElement>('.j-toggle-volume')
-    if (!volumeButton) {
-      throw new Error('Volume button not found')
-    }
-
+    // Initialize Volume Controller
     this.volumeController = new VolumeController(
-      volumeButton,
+      volumeControl,
       {
         onVolumeChange: (volume) => this.videoController.setVolume(volume),
         onMuteToggle: () => this.videoController.toggleMute()
@@ -447,26 +454,15 @@ export class VideoPlayer
     )
 
     // Initialize Playback Controller
-    const speedContainer = this.container.querySelector<HTMLElement>('.player__panel-playback-content')
-    if (!speedContainer) {
-      throw new Error('Speed container not found')
-    }
-
     this.playbackController = new PlaybackController(
-      speedContainer,
+      speedOptions,
       (speed) => this.videoController.setPlaybackRate(speed)
     )
 
     // Initialize Timeline Controller
-    const timelineContainer = this.container.querySelector<HTMLElement>('.j-line')
-    if (!timelineContainer) {
-      throw new Error('Timeline container not found')
-    }
-
     this.timelineController = new TimelineController(
-      timelineContainer,
+      timelineControl,
       (time) => {
-        // Time is already in seconds, set directly
         this.videoController.setCurrentTime(time)
       }
     )
@@ -486,21 +482,12 @@ export class VideoPlayer
 
     // Disable PiP button if not supported
     const pipSupport = this.checkPictureInPictureSupport()
-    const pipButton = this.container.querySelector<HTMLButtonElement>('.j-pic-in-pic')
+    if (this.pipButton) {
+      this.pipButton.disabled = !pipSupport.supported
 
-    // Disable PiP button initially
-    if (pipButton) {
-      pipButton.disabled = true;
-      pipButton.style.opacity = '0.5';
-      pipButton.style.cursor = 'not-allowed';
-      pipButton.title = `PiP not available: ${pipSupport.reason}`
-
-      // and enable when video is loaded if supported
       if (pipSupport.supported) {
         this.on('loadedmetadata', () => {
-          pipButton.disabled = false
-          pipButton.style.opacity = '1'
-          pipButton.style.cursor = 'pointer'
+          if (this.pipButton) this.pipButton.disabled = false
         })
       }
     }
@@ -511,15 +498,15 @@ export class VideoPlayer
    */
   private checkPictureInPictureSupport(): { supported: boolean; reason?: string }
   {
-    if (!('pictureInPictureEnabled' in document)) {
+    if (!('pictureInPictureEnabled' in this.root)) {
       return { supported: false, reason: 'API not available' }
     }
 
-    if (!document.pictureInPictureEnabled) {
+    if (!(this.root as Document).pictureInPictureEnabled) {
       return { supported: false, reason: 'PiP disabled by browser or policy' }
     }
 
-    const video = this.container.querySelector('.player__video') as HTMLVideoElement
+    const video = this.root.querySelector('.player__video') as HTMLVideoElement
     if (video && video.disablePictureInPicture) {
       return { supported: false, reason: 'Video element has PiP disabled' }
     }
@@ -533,54 +520,47 @@ export class VideoPlayer
   private bindEventListeners(): void
   {
     // Open File button
-    const openFileButton = this.container.querySelector<HTMLElement>('.j-open-file')
+    const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
     if (openFileButton) {
       openFileButton.addEventListener('click', () => this.loadVideoFile())
     }
 
     // Play/Pause button
-    const playButton = this.container.querySelector<HTMLElement>('.j-toggle-video')
-    if (playButton) {
-      playButton.addEventListener('click', () => this.videoController!.togglePlay())
+    if (this.playPauseButton) {
+      this.playPauseButton.addEventListener('click', () => this.videoController!.togglePlay())
     }
 
     // Skip buttons
-    const skipBackward = this.container.querySelector<HTMLElement>('.j-skip-backward')
-    const skipForward = this.container.querySelector<HTMLElement>('.j-skip-forward')
-    if (skipBackward) {
-      skipBackward.addEventListener('click', () => this.videoController.skip(-5))
-    }
-    if (skipForward) {
-      skipForward.addEventListener('click', () => this.videoController.skip(5))
-    }
+    this.root.querySelectorAll<SkipButtonComponent>('skip-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const direction = button.getAttribute('direction') === 'forward' ? 5 : -5
+        this.videoController.skip(direction)
+      })
+    })
 
     // Loop button
-    const loopButton = this.container.querySelector<HTMLElement>('.j-toggle-loop')
-    if (loopButton) {
-      loopButton.addEventListener('click', () => this.toggleLoop())
+    if (this.loopButton) {
+      this.loopButton.addEventListener('click', () => this.toggleLoop())
     }
 
     // Video click to play/pause and open file dialog if no source
-    const videoElement = this.container.querySelector<HTMLElement>('.player__video')
+    const videoElement = this.root.querySelector<HTMLElement>('.player__video')
     if (videoElement) {
       videoElement.addEventListener('click', () => this.videoController.togglePlay())
       videoElement.addEventListener('dblclick', () => this.toggleFullscreen())
     }
 
     // Fullscreen button
-    const fullscreenButton = this.container.querySelector<HTMLElement>('.j-fullscreen')
-    if (fullscreenButton) {
-      fullscreenButton.addEventListener('click', () => this.toggleFullscreen())
+    if (this.fullscreenButton) {
+      this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen())
     }
 
     // Picture in Picture button
-    const pipButton = this.container.querySelector<HTMLElement>('.j-pic-in-pic')
-    if (pipButton) {
-      // Checking PiP support in the browser
+    if (this.pipButton) {
       if (this.isPictureInPictureSupported()) {
-        pipButton.addEventListener('click', () => this.togglePictureInPicture())
+        this.pipButton.addEventListener('click', () => this.togglePictureInPicture())
       } else {
-        pipButton.style.display = 'none'
+        this.pipButton.style.display = 'none'
       }
     }
 
@@ -588,56 +568,14 @@ export class VideoPlayer
     this.sourcePrevButton
       ?.addEventListener('click', (e) => {
         e.stopPropagation()
-
-        this.sourcePrevButton.classList.add('player__source-nav--clicked')
-        setTimeout(() => {
-          this.sourcePrevButton.classList.remove('player__source-nav--clicked')
-        }, 400)
-
         this.previousSource().catch(console.error)
       })
 
     this.sourceNextButton
       ?.addEventListener('click', (e) => {
         e.stopPropagation()
-
-        this.sourceNextButton.classList.add('player__source-nav--clicked')
-        setTimeout(() => {
-          this.sourceNextButton.classList.remove('player__source-nav--clicked')
-        }, 400)
-
         this.nextSource().catch(console.error)
       })
-
-    // Speed options - close when clicking outside
-    document.addEventListener('click', (e) => {
-      const speedButton = this.container.querySelector('.j-speed')
-      const speedOptions = this.container.querySelector('.j-speed-options')
-      const target = e.target as HTMLElement
-
-      if (speedButton && speedOptions && !speedButton.contains(target) && !speedOptions.contains(target)) {
-        speedOptions.classList.remove('show')
-      }
-    })
-
-    // Handle speed option clicks
-    const speedOptions = this.container.querySelectorAll<HTMLElement>('.j-speed-options li')
-    speedOptions.forEach(option => {
-      option.addEventListener('click', () => {
-        const speed = parseFloat(option.getAttribute('data-speed') || '1')
-        this.videoController!.setPlaybackRate(speed)
-
-        // Update active state
-        speedOptions.forEach(opt => opt.classList.remove('active'))
-        option.classList.add('active')
-
-        // Close dropdown
-        const optionsContainer = this.container.querySelector('.j-speed-options')
-        if (optionsContainer) {
-          optionsContainer.classList.remove('show')
-        }
-      })
-    })
   }
 
   /**
@@ -645,11 +583,10 @@ export class VideoPlayer
    */
   private bindKeyboardEvents(): void
   {
-    document.addEventListener('keydown', (event) => {
-      // Only handle if player is visible
+    this.root.addEventListener('keydown', (event) => {
       if (!this.isPlayerActive()) return
 
-      switch (event.code) {
+      switch ((event as KeyboardEvent).code) {
         case 'Space':
           event.preventDefault()
           this.videoController!.togglePlay().catch(console.error)
@@ -684,9 +621,8 @@ export class VideoPlayer
 
   private initializeEventListeners(): void
   {
-    const video = this.container.querySelector<HTMLElement>('.player__video')
+    const video = this.root.querySelector<HTMLElement>('.player__video')
 
-    // Listening to PiP status change events
     video?.addEventListener('enterpictureinpicture', this.handleEnterPiP.bind(this))
     video?.addEventListener('leavepictureinpicture', this.handleLeavePiP.bind(this))
   }
@@ -731,31 +667,19 @@ export class VideoPlayer
     const hasMultipleSources = this.sources.length > 1
 
     if (this.sourcePrevButton) {
-      if (hasMultipleSources) {
-        this.sourcePrevButton.classList.remove('player__source-nav--hidden')
-      } else {
-        this.sourcePrevButton.classList.add('player__source-nav--hidden')
-      }
+      this.sourcePrevButton.style.display = hasMultipleSources ? '' : 'none'
     }
 
     if (this.sourceNextButton) {
-      if (hasMultipleSources) {
-        this.sourceNextButton.classList.remove('player__source-nav--hidden')
-      } else {
-        this.sourceNextButton.classList.add('player__source-nav--hidden')
-      }
+      this.sourceNextButton.style.display = hasMultipleSources ? '' : 'none'
     }
   }
 
   private handleTimeUpdate(currentTime: number, duration: number): void
   {
-    // Update timeline progress
     this.timelineController.updateProgress(currentTime, duration)
-
-    // Update time display
-    const timeDisplay = this.container.querySelector<HTMLElement>('.j-duration')
-    if (timeDisplay) {
-      timeDisplay.textContent = `${Helpers.formatTime(currentTime)} / ${Helpers.formatTime(duration)}`
+    if (this.timeDisplay) {
+      this.timeDisplay.update(currentTime, duration)
     }
 
     const eventData: TimeUpdateEvent = {
@@ -773,25 +697,20 @@ export class VideoPlayer
   {
     this.currentVolume = volume
     this.currentMuted = muted
-
     this.volumeController.setVolume(volume)
     this.volumeController.updateIcon(volume, muted)
-
-    const eventData: VolumeChangeEvent = { volume, muted }
-    this.events.emit('volumechange', eventData)
+    this.events.emit('volumechange', { volume, muted })
   }
 
   private handlePlay(): void
   {
-    // Update play button icon
-    const playIcon = this.container.querySelector<HTMLElement>('.j-toggle-video .fas')
-    if (playIcon) {
-      playIcon.className = 'fas fa-pause'
+    if (this.playPauseButton) {
+      this.playPauseButton.setPaused(false)
     }
 
-    // Show pause icon, hide play icon
-    const pauseIcon = this.container.querySelector<HTMLElement>('.j-pause')
-    const playBigIcon = this.container.querySelector<HTMLElement>('.j-play')
+    const pauseIcon = this.root.querySelector<HTMLElement>('.j-pause')
+    const playBigIcon = this.root.querySelector<HTMLElement>('.j-play')
+
     if (pauseIcon && playBigIcon) {
       pauseIcon.style.display = 'block'
       playBigIcon.style.display = 'none'
@@ -802,15 +721,13 @@ export class VideoPlayer
 
   private handlePause(): void
   {
-    // Update play button icon
-    const playIcon = this.container.querySelector<HTMLElement>('.j-toggle-video .fas')
-    if (playIcon) {
-      playIcon.className = 'fas fa-play'
+    if (this.playPauseButton) {
+      this.playPauseButton.setPaused(true)
     }
 
-    // Show play icon, hide pause icon
-    const pauseIcon = this.container.querySelector<HTMLElement>('.j-pause')
-    const playBigIcon = this.container.querySelector<HTMLElement>('.j-play')
+    const pauseIcon = this.root.querySelector<HTMLElement>('.j-pause')
+    const playBigIcon = this.root.querySelector<HTMLElement>('.j-play')
+
     if (pauseIcon && playBigIcon) {
       pauseIcon.style.display = 'none'
       playBigIcon.style.display = 'block'
@@ -834,16 +751,11 @@ export class VideoPlayer
 
   private handleLoadedMetadata(): void
   {
-    // Update timeline with correct duration
     const duration = this.videoController.getDuration()
     this.timelineController.setDuration(duration)
 
-    // Enable PiP button
-    const pipButton = this.container.querySelector<HTMLButtonElement>('.j-pic-in-pic')
-    if (pipButton) {
-      pipButton.disabled = false
-      pipButton.style.opacity = '1'
-      pipButton.style.cursor = 'pointer'
+    if (this.pipButton) {
+      this.pipButton.disabled = false
     }
 
     this.events.emit('loadedmetadata', undefined)
@@ -851,25 +763,19 @@ export class VideoPlayer
 
   private handleError(error: Error): void
   {
-    if (this.logging) {
-      console.error('Video error:', error)
-    }
+    if (this.logging) console.error('Video error:', error)
 
     this.events.emit('error', error)
   }
 
   private handleFullscreenChange(isFullscreen: boolean): void
   {
-    // Update fullscreen button icon
-    const fullscreenIcon = this.container.querySelector<HTMLElement>('.j-fullscreen .fas')
-    if (fullscreenIcon) {
-      fullscreenIcon.className = isFullscreen ? 'fas fa-compress' : 'fas fa-expand'
+    if (this.fullscreenButton) {
+      this.fullscreenButton.setFullscreen(isFullscreen)
     }
 
-    // Toggle fullscreen class
     this.playerElement.classList.toggle('player--fullscreen', isFullscreen)
 
-    // Adjust source navigation position in fullscreen
     this.adjustSourceNavigationPosition()
 
     this.events.emit('fullscreenchange', isFullscreen)
@@ -880,7 +786,6 @@ export class VideoPlayer
     if (!this.playerElement) return
 
     const isFullscreen = this.playerElement.classList.contains('player--fullscreen')
-
     if (this.sourcePrevButton) {
       this.sourcePrevButton.style.left = isFullscreen ? '30px' : '20px'
     }
@@ -915,28 +820,8 @@ export class VideoPlayer
    */
   private updateLoopButton(): void
   {
-    const loopButton = this.container.querySelector<HTMLElement>('.j-toggle-loop')
-    const loopIcon = loopButton?.querySelector<SVGElement>('.loop-icon')
-
-    if (!loopButton || !loopIcon) return
-
-    // Removing all mode classes
-    loopIcon.classList.remove('loop-icon--none', 'loop-icon--one', 'loop-icon--all')
-
-    // Adding the current mode class
-    loopIcon.classList.add(`loop-icon--${this.loopMode}`)
-
-    // Update the title (hint)
-    switch (this.loopMode) {
-      case 'none':
-        loopButton.title = 'Enable loop'
-        break
-      case 'one':
-        loopButton.title = 'Loop current video'
-        break
-      case 'all':
-        loopButton.title = 'Loop playlist'
-        break
+    if (this.loopButton) {
+      this.loopButton.setMode(this.loopMode)
     }
   }
 
@@ -985,8 +870,6 @@ export class VideoPlayer
     this.controlsVisibility = { ...this.controlsVisibility, ...visibility }
     this.applyIndividualControlsVisibility()
   }
-
-  // ------------------------------------------------------------------------
 
   /**
    * Set video sources array
@@ -1037,7 +920,6 @@ export class VideoPlayer
   async nextSource(): Promise<void>
   {
     if (this.sources.length <= 1) return
-
     const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
     await this.loadSourceByIndex(nextIndex)
   }
@@ -1048,7 +930,6 @@ export class VideoPlayer
   async previousSource(): Promise<void>
   {
     if (this.sources.length <= 1) return
-
     const prevIndex = (this.currentSourceIndex - 1 + this.sources.length) % this.sources.length
     await this.loadSourceByIndex(prevIndex)
   }
@@ -1067,15 +948,12 @@ export class VideoPlayer
   async switchToSourceByUrl(url: string): Promise<void>
   {
     const index = this.sources.indexOf(url)
-
     if (index === -1) {
       throw new Error('Source URL not found in sources array')
     }
 
     await this.loadSourceByIndex(index)
   }
-
-  // ------------------------------------------------------------------------
 
   /**
    * Set string source (compatibility with old API)
@@ -1092,20 +970,27 @@ export class VideoPlayer
 
   /**
    * Load a video from file (opens system dialog)
-   * Replaces current sources with the selected file
+   * Adds the selected file to the current sources.
    */
   async loadVideoFile(): Promise<void>
   {
     try {
       await this.videoController.loadVideoFile()
-      // After uploading the file, we update the sources
+
       const currentSrc = this.videoController.getCurrentSource()
       if (currentSrc) {
-        this.setSources([currentSrc])
+        if (!this.sources.includes(currentSrc)) {
+          this.addSource(currentSrc)
+        }
+
+        const newIndex = this.sources.indexOf(currentSrc)
+        if (this.currentSourceIndex !== newIndex) {
+            this.currentSourceIndex = newIndex
+            this.events.emit('sourcechanged', this.currentSourceIndex)
+        }
       }
     } catch (error) {
       console.error('Error loading video file:', error)
-      throw error
     }
   }
 
@@ -1123,7 +1008,6 @@ export class VideoPlayer
     this.videoController.setVolume(savedVolume)
     this.videoController.setMuted(savedMuted)
 
-    // Add URL to the sources if it is not there
     if (!this.sources.includes(url)) {
       this.addSource(url)
     }
@@ -1166,7 +1050,7 @@ export class VideoPlayer
    */
   private isPictureInPictureSupported(): boolean
   {
-    return 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled !== undefined
+    return 'pictureInPictureEnabled' in this.root && (this.root as Document).pictureInPictureEnabled !== undefined
   }
 
   /**
@@ -1174,23 +1058,19 @@ export class VideoPlayer
    */
   async togglePictureInPicture(): Promise<void>
   {
-    const video = this.container.querySelector<HTMLVideoElement>('.player__video')
-
-    // Check that the video has a source and that the metadata is loaded
+    const video = this.root.querySelector<HTMLVideoElement>('.player__video')
     if (!video?.src || video.readyState < HTMLMediaElement.HAVE_METADATA) {
       console.warn('Video not loaded. Cannot activate Picture-in-Picture.')
       return
     }
 
     try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture()
-      } else if (document.pictureInPictureEnabled) {
-        // Special treatment for Firefox
+      if ((this.root as Document).pictureInPictureElement) {
+        await (this.root as Document).exitPictureInPicture()
+      } else if ((this.root as Document).pictureInPictureEnabled) {
         if (navigator.userAgent.toLowerCase().includes('firefox')) {
           await this.enterPictureInPictureFirefox(video)
         } else {
-          // The standard approach for other browsers
           await video.requestPictureInPicture()
         }
       }
@@ -1204,10 +1084,6 @@ export class VideoPlayer
    */
   private async enterPictureInPictureFirefox(video: HTMLVideoElement): Promise<void>
   {
-    // Firefox requires that the video is playable and has an audio track
-    // User gestures may also be required
-
-    // Trying to play a video that is paused
     if (video.paused) {
       try {
         await video.play()
@@ -1216,12 +1092,10 @@ export class VideoPlayer
       }
     }
 
-    // Direct call to requestPictureInPicture
     try {
       await video.requestPictureInPicture()
     } catch (pipError) {
       console.error('Firefox PiP failed:', pipError)
-      // Fallback: trying an alternative method
       await this.fallbackPictureInPicture(video)
     }
   }
@@ -1231,13 +1105,10 @@ export class VideoPlayer
    */
   private async fallbackPictureInPicture(video: HTMLVideoElement): Promise<void>
   {
-    // Create a click on the video element itself
-    // This can bypass Firefox's limitations
     video.dispatchEvent(
       new MouseEvent('click', { bubbles: true, cancelable: true, view: window })
     )
 
-    // A short delay before trying again
     await new Promise(resolve => setTimeout(resolve, 100))
 
     try {
@@ -1266,8 +1137,6 @@ export class VideoPlayer
   {
     this.isShowControls = false
     this.hideAllControls()
-
-    // Clear auto-hide timeout
     if (this.interfaceTimeout) {
       clearTimeout(this.interfaceTimeout)
     }
@@ -1303,8 +1172,6 @@ export class VideoPlayer
   setMuted(muted: boolean): void
   {
     this.videoController!.setMuted(muted)
-
-    // Update volume controller icon
     this.volumeController.updateIcon(this.videoController.getVolume(), muted)
   }
 
@@ -1342,6 +1209,7 @@ export class VideoPlayer
   {
     const modes: LoopMode[] = ['none', 'one', 'all']
     const currentIndex = modes.indexOf(this.loopMode)
+
     this.loopMode = modes[(currentIndex + 1) % modes.length]
 
     this.applyLoopMode()
@@ -1444,9 +1312,9 @@ export class VideoPlayer
 
   private isPlayerActive(): boolean
   {
-    return this.playerElement.contains(document.activeElement) ||
+    return this.playerElement.contains((this.root as Document).activeElement) ||
       this.videoController.getIsPlaying() ||
-      document.fullscreenElement === this.playerElement
+      (this.root as Document).fullscreenElement === this.playerElement
   }
 
   /**

@@ -40,7 +40,7 @@ export default class VideoPlayerComponent extends BaseComponent
   {
     // Now the properties are available
     this.playerInstance = new VideoPlayer({
-      container: this.shadow as unknown as HTMLElement,
+      container: this, // The host element itself is the container for styles
       initialSources: this.initialSources,
       maxWidth: this.maxWidth,
       aspectRatio: this.aspectRatio,
@@ -53,7 +53,7 @@ export default class VideoPlayerComponent extends BaseComponent
       showControls: this.showControls,
       logging: this.logging,
       controlsVisibility: this.controlsVisibility,
-    })
+    }, this.shadow) // The shadow root is for querying elements
 
     this.resolveReady(this.playerInstance)
   }

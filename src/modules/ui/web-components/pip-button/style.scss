@@ -1,34 +1,36 @@
 .player__panel-button {
-    display: flex;
-    outline: none;
-    border: 0;
-    font-size: 20px;
-    cursor: pointer;
-    color: inherit;
-    padding: 0;
-    background: none;
+  display: flex;
+  outline: none;
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  background: none;
+}
+
+.j-pic-in-pic {
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 1 !important;
+    transform: scale(1.1);
   }
-  .j-pic-in-pic {
-    transition: all 0.2s ease;
 
-    &:hover:not(:disabled) {
-      opacity: 1 !important;
-      transform: scale(1.1);
-    }
+  &:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
 
-    &:disabled {
-      cursor: not-allowed !important;
-      opacity: 0.5 !important;
-
-      &:hover {
-        transform: none !important;
-      }
+    &:hover {
+      transform: none !important;
     }
   }
-  :host(.player--pip-active) .j-pic-in-pic {
+}
+
+:host(.player--pip-active) .j-pic-in-pic {
+  color: #007bff;
+
+  .material-icons {
     color: #007bff;
-
-    .material-icons {
-      color: #007bff;
-    }
   }
+}

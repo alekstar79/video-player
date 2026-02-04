@@ -16,29 +16,13 @@ export default class TimelineComponent extends BaseComponent
     super()
     this.render(template, styles)
 
-    this.progressBar = this.getElement('.j-line-current')!
-    this.hoverBar = this.getElement('.j-line-ghost')!
-    this.hint = this.getElement('.j-hint')!
+    this.progressBar = this.shadow.querySelector('.j-line-current')!
+    this.hoverBar = this.shadow.querySelector('.j-line-ghost')!
+    this.hint = this.shadow.querySelector('.j-hint')!
 
-    /**
-     * TS2769: No overload matches this call.
-     * Overload 1 of 2,
-     * (type: "slotchange", listener: (this: ShadowRoot, ev: Event) => any, options?: boolean | AddEventListenerOptions | undefined): void
-     * , gave the following error.
-     * Argument of type "mousedown" is not assignable to parameter of type "slotchange"
-     * Overload 2 of 2,
-     * (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions | undefined): void
-     * , gave the following error.
-     * Argument of type (event: MouseEvent) => void is not assignable to parameter of type EventListenerOrEventListenerObject
-     * Type (event: MouseEvent) => void is not assignable to type EventListener
-     * Types of parameters event and evt are incompatible.
-     * Type Event is missing the following properties from type MouseEvent: altKey, button, buttons, clientX, and 23 more.
-     */
-    // @ts-ignore
-    this.shadowRoot!.addEventListener('mousedown', this.handleMouseDown.bind(this))
-    // @ts-ignore
-    this.shadowRoot!.addEventListener('mousemove', this.handleMouseMove.bind(this))
-    this.shadowRoot!.addEventListener('mouseleave', this.hideHoverPreview.bind(this))
+    this.shadow.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener)
+    this.shadow.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener)
+    this.shadow.addEventListener('mouseleave', this.hideHoverPreview.bind(this))
   }
 
   private handleMouseDown(event: MouseEvent): void
@@ -53,18 +37,18 @@ export default class TimelineComponent extends BaseComponent
   {
     const percent = this.calculatePercentFromEvent(event)
     this.updateHoverPreview(event, percent)
-    this.emit('hover', percent * this.duration)
+    this.emit('hover', { time: percent * this.duration })
   }
 
   private seekToEventPosition(event: MouseEvent): void
   {
     const percent = this.calculatePercentFromEvent(event)
-    this.emit('seek', percent * this.duration)
+    this.emit('seek', { time: percent * this.duration })
   }
 
   private calculatePercentFromEvent(event: MouseEvent): number
   {
-    const rect = this.shadowRoot!.querySelector('.player__lines')!.getBoundingClientRect()
+    const rect = this.shadow.querySelector('.player__lines')!.getBoundingClientRect()
     const percent = (event.clientX - rect.left) / rect.width
 
     return Helpers.clamp(percent, 0, 1)
@@ -72,7 +56,7 @@ export default class TimelineComponent extends BaseComponent
 
   private updateHoverPreview(event: MouseEvent, percent: number): void
   {
-    const rect = this.shadowRoot!.querySelector('.player__lines')!.getBoundingClientRect()
+    const rect = this.shadow.querySelector('.player__lines')!.getBoundingClientRect()
     const position = event.clientX - rect.left
 
     this.hoverBar.style.width = `${position}px`

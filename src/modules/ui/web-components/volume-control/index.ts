@@ -14,13 +14,13 @@ export default class VolumeControlComponent extends BaseComponent
     super()
     this.render(template, styles)
 
-    this.button = this.getElement('button')!
-    this.slider = this.getElement('.j-volume-input') as HTMLInputElement
-    this.icon = this.getElement('.fas') as HTMLElement
+    this.button = this.shadow.querySelector('button')!
+    this.slider = this.shadow.querySelector('.j-volume-input') as HTMLInputElement
+    this.icon = this.shadow.querySelector('.fas') as HTMLElement
 
     this.slider.addEventListener('input', (event) => {
-      const value = parseInt((event.target as HTMLInputElement).value)
-      this.emit('volumechange', value / 100)
+      const value = parseFloat((event.target as HTMLInputElement).value)
+      this.emit('volumechange', { volume: value })
     })
 
     this.button.addEventListener('click', (event) => {
@@ -33,7 +33,12 @@ export default class VolumeControlComponent extends BaseComponent
 
   public setVolume(volume: number): void
   {
-    this.slider.value = String(volume * 100)
+    this.slider.value = String(volume)
+  }
+
+  public getVolume(): number
+  {
+    return parseFloat(this.slider.value)
   }
 
   public updateIcon(volume: number, muted: boolean): void

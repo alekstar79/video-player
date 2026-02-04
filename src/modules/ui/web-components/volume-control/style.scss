@@ -1,71 +1,77 @@
 :host {
-    display: flex;
-    align-items: center;
-  }
-  .player__panel-button {
-    display: flex;
-    outline: none;
-    border: 0;
-    font-size: 20px;
-    cursor: pointer;
-    color: inherit;
-    padding: 0;
-    background: none;
-    align-items: center;
-    min-width: 26px;
+  display: flex;
+  align-items: center;
+}
 
-    .fas {
-      min-width: 32px;
+.player__panel-button {
+  display: flex;
+  outline: none;
+  border: 0;
+  font-size: 20px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  background: none;
+  align-items: center;
+  min-width: 26px;
+
+  .fas {
+    min-width: 32px;
+  }
+
+  &:hover {
+    .player__volume {
+      width: 100px;
+      opacity: 1;
+      margin-left: 10px;
     }
   }
-  .player__volume {
+}
+
+.player__volume {
+  -webkit-appearance: none;
+  width: 0;
+  height: 5px;
+  margin-left: 0;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, .2);
+  outline: none;
+  opacity: 0;
+  transition: all .15s ease-in-out;
+  transition-property: width, opacity, margin-left;
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 0;
-    height: 5px;
-    margin-left: 0;
-    border-radius: 3px;
-    background-color: rgba(255, 255, 255, .2);
-    outline: none;
-    opacity: 0;
-    transition: all .15s ease-in-out;
-    transition-property: width, opacity, margin-left;
-    cursor: pointer;
+    width: 14px;
+    height: 14px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: all 0.15s ease-in-out;
+    transition-property: background-color, width, height;
 
-    &::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      background-color: #fff;
-      border-radius: 50%;
-      transition: all 0.15s ease-in-out;
-      transition-property: background-color, width, height;
-
-      &:hover {
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    &::-moz-range-thumb {
-      border: 0;
-      width: 14px;
-      height: 14px;
-      background-color: #fff;
-      border-radius: 50%;
-      transition: all 0.15s ease-in-out;
-      transition-property: background-color, width, height;
-
-      &:hover {
-        width: 16px;
-        height: 16px;
-      }
+    &:hover {
+      width: 16px;
+      height: 16px;
     }
   }
-  :host(:hover) .player__volume {
-    width: 100px;
-    opacity: 1;
-    margin-left: 10px;
+
+  &::-moz-range-thumb {
+    border: 0;
+    width: 14px;
+    height: 14px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: all 0.15s ease-in-out;
+    transition-property: background-color, width, height;
+
+    &:hover {
+      width: 16px;
+      height: 16px;
+    }
   }
-  .player__volume-icon {
-    width: 20px;
-  }
+}
+
+.player__volume-icon {
+  width: 20px;
+}

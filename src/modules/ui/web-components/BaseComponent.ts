@@ -1,10 +1,8 @@
-const externalStyles = `
-  @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-  @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
-  @import 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
-`
-
-let sharedSheet: CSSStyleSheet
+const externalStyleLinks = [
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/icon?family=Material+Icons',
+  'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
+]
 
 export abstract class BaseComponent extends HTMLElement
 {
@@ -14,26 +12,28 @@ export abstract class BaseComponent extends HTMLElement
   {
     super()
     this.shadow = this.attachShadow({ mode: 'open' })
-
-    if (!sharedSheet) {
-      sharedSheet = new CSSStyleSheet()
-      sharedSheet.replaceSync(externalStyles)
-    }
   }
 
   protected render(template: string, styles?: string): void
   {
-    const componentSheet = new CSSStyleSheet()
+    // Add external icon libraries
+    externalStyleLinks.forEach(href => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = href
+      this.shadow.appendChild(link)
+    })
 
+    // Add component-specific styles
     if (styles) {
-      componentSheet.replaceSync(styles)
+      const styleElement = document.createElement('style')
+      styleElement.textContent = styles
+      this.shadow.appendChild(styleElement)
     }
 
-    this.shadow.adoptedStyleSheets = [sharedSheet, componentSheet]
-
+    // Add component HTML template
     const templateElement = document.createElement('template')
     templateElement.innerHTML = template
-
     this.shadow.appendChild(templateElement.content.cloneNode(true))
   }
 

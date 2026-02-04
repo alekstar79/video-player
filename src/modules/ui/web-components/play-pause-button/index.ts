@@ -12,21 +12,16 @@ export default class PlayPauseButtonComponent extends BaseComponent
   {
     super()
     this.render(template, styles)
-    this.button = this.getElement('.j-toggle-video')!
-    this.icon = this.getElement('.fas')!
+    this.button = this.shadow.querySelector('.j-toggle-video')!
+    this.icon = this.shadow.querySelector('.fas')!
 
     this.button.addEventListener('click', () => {
-      this.emit('toggleplay')
+      this.emit('click')
     })
   }
 
-  public setPlayIcon(): void
+  public setPaused(paused: boolean): void
   {
-    this.icon.className = 'fas fa-play'
-  }
-
-  public setPauseIcon(): void
-  {
-    this.icon.className = 'fas fa-pause'
+    this.icon.className = `fas ${paused ? 'fa-play' : 'fa-pause'}`
   }
 }
