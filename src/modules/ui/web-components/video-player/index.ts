@@ -4,7 +4,7 @@ import { BaseComponent } from '../BaseComponent'
 import { VideoPlayer } from '@/app/VideoPlayer'
 
 import template from './template.html?raw'
-import styles from './style.scss?raw'
+import styles from './style.scss?inline'
 
 export default class VideoPlayerComponent extends BaseComponent
 {
