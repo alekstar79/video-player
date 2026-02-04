@@ -1,7 +1,7 @@
 const externalStyles = `
-  @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-  @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-  @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+  @import 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  @import 'https://fonts.googleapis.com/icon?family=Material+Icons';
+  @import 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200';
 `
 
 let sharedSheet: CSSStyleSheet
