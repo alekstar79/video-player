@@ -1,12 +1,13 @@
 <div class="player">
+  <!-- Message for when no files are available -->
   <div class="player__no-files-message">No video files to play</div>
 
-  <!-- Main Icons (like in original) -->
+  <!-- Main playback status icons (play/pause) -->
   <em class="fas fa-pause player__main-icon j-pause"></em>
   <em class="fas fa-play player__main-icon j-play"></em>
 
-  <!-- Video Element -->
-  <video class="player__video" crossorigin="anonymous" preload="auto"></video>
+  <!-- The Video Element -->
+  <video class="player__video" crossorigin="anonymous"></video>
 
   <!-- Source Navigation Buttons -->
   <button
@@ -24,15 +25,16 @@
 
   <!-- Top Panel -->
   <div class="player__top-panel">
+    <preview-button></preview-button>
     <playlist-button></playlist-button>
   </div>
 
-  <!-- Playlist Panel -->
+  <!-- Draggable Panels -->
   <playlist-panel></playlist-panel>
+  <preview-panel></preview-panel>
 
-  <!-- Control Panel -->
+  <!-- Main Control Panel (Bottom) -->
   <div class="player__panel">
-    <!-- Timeline -->
     <timeline-control class="j-line"></timeline-control>
 
     <!-- Left Controls -->
@@ -46,6 +48,7 @@
       <time-display class="j-duration"></time-display>
     </div>
 
+    <!-- Right Controls -->
     <div class="player__panel-block">
       <speed-options class="j-speed"></speed-options>
       <pip-button class="j-pic-in-pic"></pip-button>
