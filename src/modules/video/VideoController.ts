@@ -93,13 +93,17 @@ export class VideoController implements VideoControls
 
   private handleError(): void
   {
-    const error = new Error(this.video.error?.message || 'Video error occurred')
+    const error = this.video.error
 
-    if (this.logging) {
-      console.error('Video error:', error, this.video.error)
+    if (error && error.code !== error.MEDIA_ERR_ABORTED) {
+      const errorMessage = error.message || 'Video error occurred'
+
+      if (this.logging) {
+        console.error('Video error:', errorMessage, error)
+      }
+
+      this.eventHandlers.onError(new Error(errorMessage))
     }
-
-    this.eventHandlers.onError(error)
   }
 
   // Public API Methods
@@ -118,9 +122,11 @@ export class VideoController implements VideoControls
 
     try {
       await this.video.play()
-    } catch (error) {
-      console.error('Error playing video:', error)
-      throw error
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Error playing video:', error)
+        throw error
+      }
     }
   }
 
@@ -206,14 +212,13 @@ export class VideoController implements VideoControls
     try {
       // Trying to reproduce
       await this.video.play()
-    } catch (error) {
-      // @ts-ignore
+    } catch (error: any) {
       if (error.name === 'NotAllowedError' && !muted) {
         // Auto-playback with sound is blocked
         this.video.muted = true
         await this.video.play()
         this.handleVolumeChange()
-      } else {
+      } else if (error.name !== 'AbortError') {
         throw error
       }
     }
@@ -239,9 +244,16 @@ export class VideoController implements VideoControls
       this.handleVolumeChange()
 
       await this.video.play()
+    } catch (error: any) {
+      // Ignore AbortError which can happen on rapid source changes
+      if (error.name === 'AbortError') {
+        if (this.logging) {
+          console.log('Video load aborted, likely due to rapid source change.')
+        }
+        return
+      }
 
-    } catch (fallbackError) {
-      throw new Error('[HTTP error]: Upload of the remote file failed')
+      throw new Error(`[HTTP error]: Failed to load remote file. ${error.message}`)
     }
   }
 
@@ -251,10 +263,12 @@ export class VideoController implements VideoControls
   async loadVideoFile(): Promise<void> {
     try {
       const file = await Filesystem.open('video/*') as File
+
       if (file) {
         const url = await this.setVideoSource(file, false)
+
         if (this.eventHandlers.onFileLoaded) {
-          this.eventHandlers.onFileLoaded(file, url);
+          this.eventHandlers.onFileLoaded(file, url)
         }
       }
     } catch (error) {

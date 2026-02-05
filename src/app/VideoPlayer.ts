@@ -555,17 +555,17 @@ export class VideoPlayer
     // Open File button
     const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
     if (openFileButton) {
-      openFileButton.addEventListener('click', () => {
+      openFileButton.addEventListener('click', async () => {
         this.resetInterfaceTimeout()
-        this.loadVideoFile()
+        await this.loadVideoFile()
       })
     }
 
     // Play/Pause button
     if (this.playPauseButton) {
-      this.playPauseButton.addEventListener('click', () => {
+      this.playPauseButton.addEventListener('click', async () => {
         this.resetInterfaceTimeout()
-        this.videoController!.togglePlay()
+        await this.videoController.togglePlay()
       })
     }
 
@@ -595,18 +595,18 @@ export class VideoPlayer
 
     // Fullscreen button
     if (this.fullscreenButton) {
-      this.fullscreenButton.addEventListener('click', () => {
+      this.fullscreenButton.addEventListener('click', async () => {
         this.resetInterfaceTimeout()
-        this.toggleFullscreen()
+        await this.toggleFullscreen()
       })
     }
 
     // Picture in Picture button
     if (this.pipButton) {
       if (this.isPictureInPictureSupported()) {
-        this.pipButton.addEventListener('click', () => {
+        this.pipButton.addEventListener('click', async () => {
           this.resetInterfaceTimeout()
-          this.togglePictureInPicture()
+          await this.togglePictureInPicture()
         })
       } else {
         this.pipButton.style.display = 'none'
