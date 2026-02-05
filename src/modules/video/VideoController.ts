@@ -104,6 +104,10 @@ export class VideoController implements VideoControls
 
   // Public API Methods
 
+  public getVideoElement(): HTMLVideoElement {
+    return this.video;
+  }
+
   async play(): Promise<void>
   {
     // If no source is set, open file dialog first

@@ -1,0 +1,136 @@
+:host {
+  position: fixed;
+  top: 150px;
+  left: calc(50% - 400px);
+  z-index: 100;
+  display: none;
+  cursor: grab;
+}
+
+.preview {
+  width: 350px;
+  background-color: rgba(20, 20, 20, 0.85);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #f1f1f1;
+
+  &__handle {
+    width: 100%;
+    padding: 12px 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    cursor: inherit;
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.4);
+      border-radius: 2px;
+    }
+  }
+
+  &__close-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    line-height: 1;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  &__content {
+    padding: 15px;
+  }
+
+  &__image-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  &__image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  &__placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+  }
+
+  &__image:not([src=""]) + &__placeholder {
+    display: none;
+  }
+
+  &__info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 12px;
+    font-size: 13px;
+  }
+
+  .info-label {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .info-value {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 15px 15px;
+  }
+
+  &__btn {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+    &--generate {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      &:hover {
+        background-color: #ff4838;
+      }
+    }
+  }
+}

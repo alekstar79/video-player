@@ -16,6 +16,8 @@ import {
   PlaylistButtonComponent,
   PlaylistPanelComponent,
   PlayPauseButtonComponent,
+  PreviewButtonComponent,
+  PreviewPanelComponent,
   SkipButtonComponent,
   SpeedOptionsComponent,
   TimeDisplayComponent,
@@ -53,11 +55,14 @@ export class VideoPlayer
   private timeDisplay!: TimeDisplayComponent
   private playlistButton!: PlaylistButtonComponent
   private playlistPanel!: PlaylistPanelComponent
+  private previewButton!: PreviewButtonComponent
+  private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
 
   // State
   private sources: string[] = []
-  private sourceTitleMap: Map<string, string> = new Map();
+  private sourceTitleMap: Map<string, string> = new Map()
+  private sourceFileMap: Map<string, File> = new Map()
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
 
@@ -145,7 +150,7 @@ export class VideoPlayer
     // Load initial sources if provided
     if (this.sources.length > 0) {
       await this.loadInitialSources()
-      this.handleInterfaceHide()
+      this.resetInterfaceTimeout() // Use the new method
     } else {
       this.toggleNoFilesMessage(true)
     }
@@ -438,6 +443,8 @@ export class VideoPlayer
     this.timeDisplay = this.root.querySelector('time-display')!
     this.playlistButton = this.root.querySelector('playlist-button')!
     this.playlistPanel = this.root.querySelector('playlist-panel')!
+    this.previewButton = this.root.querySelector('preview-button')!
+    this.previewPanel = this.root.querySelector('preview-panel')!
 
     const volumeControl = this.root.querySelector<VolumeControlComponent>('volume-control')!
     const speedOptions = this.root.querySelector<SpeedOptionsComponent>('speed-options')!
@@ -548,17 +555,24 @@ export class VideoPlayer
     // Open File button
     const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
     if (openFileButton) {
-      openFileButton.addEventListener('click', () => this.loadVideoFile())
+      openFileButton.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
+        this.loadVideoFile()
+      })
     }
 
     // Play/Pause button
     if (this.playPauseButton) {
-      this.playPauseButton.addEventListener('click', () => this.videoController!.togglePlay())
+      this.playPauseButton.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
+        this.videoController!.togglePlay()
+      })
     }
 
     // Skip buttons
     this.root.querySelectorAll<SkipButtonComponent>('skip-button').forEach(button => {
       button.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
         const direction = button.getAttribute('direction') === 'forward' ? 5 : -5
         this.videoController.skip(direction)
       })
@@ -566,7 +580,10 @@ export class VideoPlayer
 
     // Loop button
     if (this.loopButton) {
-      this.loopButton.addEventListener('click', () => this.toggleLoop())
+      this.loopButton.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
+        this.toggleLoop()
+      })
     }
 
     // Video click to play/pause and open file dialog if no source
@@ -578,13 +595,19 @@ export class VideoPlayer
 
     // Fullscreen button
     if (this.fullscreenButton) {
-      this.fullscreenButton.addEventListener('click', () => this.toggleFullscreen())
+      this.fullscreenButton.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
+        this.toggleFullscreen()
+      })
     }
 
     // Picture in Picture button
     if (this.pipButton) {
       if (this.isPictureInPictureSupported()) {
-        this.pipButton.addEventListener('click', () => this.togglePictureInPicture())
+        this.pipButton.addEventListener('click', () => {
+          this.resetInterfaceTimeout()
+          this.togglePictureInPicture()
+        })
       } else {
         this.pipButton.style.display = 'none'
       }
@@ -592,27 +615,53 @@ export class VideoPlayer
 
     // Playlist button
     if (this.playlistButton) {
-      this.playlistButton.addEventListener('click', () => this.togglePlaylist())
+      this.playlistButton.addEventListener('click', () => {
+        this.resetInterfaceTimeout()
+        this.togglePlaylist()
+      })
     }
 
     // Playlist panel
     if (this.playlistPanel) {
       this.playlistPanel.addEventListener('itemclick', async (e: any) => {
+        this.resetInterfaceTimeout()
         await this.switchToSource(e.detail.index)
       })
 
       this.playlistPanel.addEventListener('close', () => this.togglePlaylist())
     }
 
+    // Preview button
+    if (this.previewButton) {
+      this.previewButton.addEventListener('click', async () => {
+        this.resetInterfaceTimeout()
+        await this.togglePreviewPanel()
+      })
+    }
+
+    // Preview panel
+    if (this.previewPanel) {
+      this.previewPanel.addEventListener('generate', async () => {
+        this.resetInterfaceTimeout()
+        await this.generateAndShowPreview()
+      })
+
+      this.previewPanel.addEventListener('close', async () => {
+        await this.togglePreviewPanel()
+      })
+    }
+
     // Source Navigation buttons
     this.sourcePrevButton
       ?.addEventListener('click', (e) => {
+        this.resetInterfaceTimeout()
         e.stopPropagation()
         this.previousSource().catch(console.error)
       })
 
     this.sourceNextButton
       ?.addEventListener('click', (e) => {
+        this.resetInterfaceTimeout()
         e.stopPropagation()
         this.nextSource().catch(console.error)
       })
@@ -628,6 +677,7 @@ export class VideoPlayer
   {
     this.root.addEventListener('keydown', (event) => {
       if (!this.isPlayerActive()) return
+      this.resetInterfaceTimeout()
 
       switch ((event as KeyboardEvent).code) {
         case 'Space':
@@ -680,8 +730,9 @@ export class VideoPlayer
     this.playerElement.classList.remove('player--pip-active')
   }
 
-  private handleInterfaceHide()
-  {
+  private resetInterfaceTimeout(): void {
+    this.showInterface()
+    clearTimeout(this.interfaceTimeout)
     this.interfaceTimeout = setTimeout(() => {
       if (this.videoController.getIsPlaying()) {
         this.hideInterface()
@@ -694,13 +745,7 @@ export class VideoPlayer
    */
   private initInterfaceAutoHide(): void
   {
-    this.playerElement.addEventListener('mousemove', () => {
-      this.showInterface()
-
-      clearTimeout(this.interfaceTimeout)
-
-      this.handleInterfaceHide()
-    })
+    this.playerElement.addEventListener('mousemove', () => this.resetInterfaceTimeout())
   }
 
   // Event Handlers
@@ -1381,8 +1426,9 @@ export class VideoPlayer
     }
   }
 
-  private async handleFileLoaded(file: File, url: string): Promise<void> {
+  private handleFileLoaded = async (file: File, url: string): Promise<void> => {
     try {
+      this.sourceFileMap.set(url, file) // Сохраняем файл
       const metadata = await getMetadata(file)
       const title = metadata.title || file.name
       this.sourceTitleMap.set(url, title)
@@ -1404,6 +1450,47 @@ export class VideoPlayer
       if (!this.sources.includes(url)) {
           this.addSource(url, file.name)
       }
+    }
+  }
+
+  private async togglePreviewPanel(): Promise<void> {
+    if (this.sources.length === 0) return
+
+    const isVisible = this.previewPanel.hasAttribute('visible')
+    if (!isVisible) {
+      this.previewPanel.setAttribute('visible', '')
+      await this.generateAndShowPreview()
+    } else {
+      this.previewPanel.removeAttribute('visible')
+    }
+  }
+
+  private async generateAndShowPreview(): Promise<void> {
+    if (this.sources.length === 0 || !this.previewPanel) return
+
+    const videoElement = this.videoController.getVideoElement()
+    const currentTime = videoElement.currentTime
+    const currentSource = this.getCurrentSource()
+
+    try {
+      const blob = await Helpers.captureFrame(videoElement)
+      if (!blob) {
+        console.error("Captured frame blob is null.")
+        return
+      }
+
+      const title = this.sourceTitleMap.get(currentSource) || 'preview'
+      const filename = `${title.split('.').slice(0, -1).join('.')}_${Math.round(currentTime)}.jpg`
+
+      this.previewPanel.update({
+          blob: blob,
+          filename: filename,
+          resolution: `${videoElement.videoWidth}x${videoElement.videoHeight}`,
+          timestamp: currentTime,
+          size: blob.size
+      })
+    } catch (error) {
+      console.error("Failed to generate preview:", error)
     }
   }
 }
