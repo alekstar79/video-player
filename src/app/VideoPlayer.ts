@@ -1,4 +1,5 @@
 import { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig } from '@/core/types'
+
 import { EventEmitter } from '@/core/events/EventEmitter'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
 import { PlaybackController } from '@/modules/controls/PlaybackController'
@@ -587,6 +588,8 @@ export class VideoPlayer
       this.playlistPanel.addEventListener('itemclick', async (e: any) => {
         await this.switchToSource(e.detail.index)
       })
+
+      this.playlistPanel.addEventListener('close', () => this.togglePlaylist())
     }
 
     // Source Navigation buttons
