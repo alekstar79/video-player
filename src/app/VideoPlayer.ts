@@ -1,5 +1,4 @@
-import { ControlsVisibility, VideoPlayerConfig, PlayerEventMap, TimeUpdateEvent, LoopMode } from '@/core/types'
-
+import { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig } from '@/core/types'
 import { EventEmitter } from '@/core/events/EventEmitter'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
 import { PlaybackController } from '@/modules/controls/PlaybackController'
@@ -7,11 +6,14 @@ import { TimelineController } from '@/modules/controls/TimelineController'
 import { VideoController } from '@/modules/video/VideoController'
 import { VolumeController } from '@/modules/controls/VolumeController'
 import { Helpers } from '@/core/utils/helpers'
+import { getMetadata } from '@/core/metadata'
 
 import {
   FullscreenButtonComponent,
   LoopButtonComponent,
   PipButtonComponent,
+  PlaylistButtonComponent,
+  PlaylistPanelComponent,
   PlayPauseButtonComponent,
   SkipButtonComponent,
   SpeedOptionsComponent,
@@ -48,9 +50,12 @@ export class VideoPlayer
   private fullscreenButton!: FullscreenButtonComponent
   private pipButton!: PipButtonComponent
   private timeDisplay!: TimeDisplayComponent
+  private playlistButton!: PlaylistButtonComponent
+  private playlistPanel!: PlaylistPanelComponent
 
   // State
   private sources: string[] = []
+  private sourceTitleMap: Map<string, string> = new Map()
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
 
@@ -257,6 +262,14 @@ export class VideoPlayer
       return
     }
 
+    for (const source of this.sources) {
+      if (!this.sourceTitleMap.has(source)) {
+        const fileName = source.split('/').pop()?.split('?')[0] || 'Unknown Video'
+        this.sourceTitleMap.set(source, fileName)
+      }
+    }
+    this.updatePlaylist()
+
     try {
       if (this.logging) {
         console.log('Loading initial video sources:', this.sources)
@@ -356,7 +369,7 @@ export class VideoPlayer
    */
   private hideAllControls(): void
   {
-    const controlElements = ['.player__panel', '.player__main-icon']
+    const controlElements = ['.player__panel', '.player__top-panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
       this.root.querySelectorAll<HTMLElement>(selector)
@@ -377,7 +390,7 @@ export class VideoPlayer
    */
   private showAllControls(): void
   {
-    const controlElements = ['.player__panel', '.player__main-icon']
+    const controlElements = ['.player__panel', '.player__top-panel', '.player__main-icon']
 
     controlElements.forEach(selector => {
       this.root.querySelectorAll<HTMLElement>(selector)
@@ -410,6 +423,8 @@ export class VideoPlayer
     this.fullscreenButton = this.root.querySelector('fullscreen-button')!
     this.pipButton = this.root.querySelector('pip-button')!
     this.timeDisplay = this.root.querySelector('time-display')!
+    this.playlistButton = this.root.querySelector('playlist-button')!
+    this.playlistPanel = this.root.querySelector('playlist-panel')!
 
     const volumeControl = this.root.querySelector<VolumeControlComponent>('volume-control')!
     const speedOptions = this.root.querySelector<SpeedOptionsComponent>('speed-options')!
@@ -425,7 +440,8 @@ export class VideoPlayer
         onPause: () => this.handlePause(),
         onEnded: () => this.handleEnded(),
         onLoadedMetadata: () => this.handleLoadedMetadata(),
-        onError: (error) => this.handleError(error)
+        onError: (error) => this.handleError(error),
+        onFileLoaded: this.handleFileLoaded,
       },
       this.logging,
       this.config.loop ?? false
@@ -486,6 +502,8 @@ export class VideoPlayer
         })
       }
     }
+
+    this.updatePlaylist()
   }
 
   /**
@@ -559,6 +577,18 @@ export class VideoPlayer
       }
     }
 
+    // Playlist button
+    if (this.playlistButton) {
+      this.playlistButton.addEventListener('click', () => this.togglePlaylist())
+    }
+
+    // Playlist panel
+    if (this.playlistPanel) {
+      this.playlistPanel.addEventListener('itemclick', async (e: any) => {
+        await this.switchToSource(e.detail.index)
+      })
+    }
+
     // Source Navigation buttons
     this.sourcePrevButton
       ?.addEventListener('click', (e) => {
@@ -571,6 +601,9 @@ export class VideoPlayer
         e.stopPropagation()
         this.nextSource().catch(console.error)
       })
+
+    // Update playlist on source change
+    this.on('sourcechanged', () => this.updatePlaylist())
   }
 
   /**
@@ -874,15 +907,20 @@ export class VideoPlayer
     this.sources = [...sources]
     this.currentSourceIndex = 0
     this.updateSourceNavigationVisibility()
+    this.updatePlaylist()
   }
 
   /**
    * Add source to the sources array
    */
-  addSource(source: string): void
+  addSource(source: string, title?: string): void
   {
-    this.sources.push(source)
-    this.updateSourceNavigationVisibility()
+    if (!this.sources.includes(source)) {
+        this.sources.push(source)
+        this.sourceTitleMap.set(source, title || source.split('/').pop()?.split('?')[0] || 'Unknown Video')
+        this.updateSourceNavigationVisibility()
+        this.updatePlaylist()
+    }
   }
 
   /**
@@ -969,24 +1007,7 @@ export class VideoPlayer
    */
   async loadVideoFile(): Promise<void>
   {
-    try {
-      await this.videoController.loadVideoFile()
-
-      const currentSrc = this.videoController.getCurrentSource()
-      if (currentSrc) {
-        if (!this.sources.includes(currentSrc)) {
-          this.addSource(currentSrc)
-        }
-
-        const newIndex = this.sources.indexOf(currentSrc)
-        if (this.currentSourceIndex !== newIndex) {
-            this.currentSourceIndex = newIndex
-            this.events.emit('sourcechanged', this.currentSourceIndex)
-        }
-      }
-    } catch (error) {
-      console.error('Error loading video file:', error)
-    }
+    await this.videoController.loadVideoFile()
   }
 
   /**
@@ -1326,6 +1347,45 @@ export class VideoPlayer
 
     if (this.interfaceTimeout) {
       clearTimeout(this.interfaceTimeout)
+    }
+  }
+
+  private updatePlaylist(): void {
+    if (this.playlistPanel) {
+      this.playlistPanel.sources = this.sources.map(source => this.sourceTitleMap.get(source) || 'Unknown Video')
+      this.playlistPanel.activeIndex = this.currentSourceIndex
+    }
+  }
+
+  private togglePlaylist(): void {
+    if (this.playlistPanel) {
+      this.playlistPanel.toggleAttribute('visible')
+    }
+  }
+
+  private handleFileLoaded = async (file: File, url: string): Promise<void> => {
+    try {
+        const metadata = await getMetadata(file)
+        const title = metadata.title || file.name
+        this.sourceTitleMap.set(url, title)
+
+        if (!this.sources.includes(url)) {
+            this.addSource(url, title)
+        } else {
+            this.updatePlaylist()
+        }
+
+        const newIndex = this.sources.indexOf(url)
+        if (this.currentSourceIndex !== newIndex) {
+            this.currentSourceIndex = newIndex
+            this.events.emit('sourcechanged', this.currentSourceIndex)
+        }
+    } catch (error) {
+        console.error('Error processing loaded file:', error)
+        // Fallback if metadata fails
+        if (!this.sources.includes(url)) {
+            this.addSource(url, file.name)
+        }
     }
   }
 }
