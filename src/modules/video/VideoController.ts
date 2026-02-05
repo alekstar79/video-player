@@ -1,5 +1,5 @@
 import { VideoControls, VideoElement, VideoEventHandlers } from './types'
-import { Filesystem } from '@/core/utils/filesystem.ts'
+import { Filesystem } from '@/core/utils/filesystem'
 import { Helpers } from '@/core/utils/helpers'
 
 /**
@@ -10,14 +10,14 @@ export class VideoController implements VideoControls
   private readonly video: VideoElement
   private readonly logging: boolean = false
 
-  private eventHandlers: VideoEventHandlers
-  private currentBlobUrl: string | null = null
+  private eventHandlers: VideoEventHandlers & { onFileLoaded?: (file: File, url: string) => void }
+  private createdBlobUrls: string[] = []
   private isPlaying: boolean = false
   private hasSource: boolean = false
 
   constructor(
     videoElement: HTMLVideoElement,
-    eventHandlers: VideoEventHandlers,
+    eventHandlers: VideoEventHandlers & { onFileLoaded?: (file: File, url: string) => void },
     logging: boolean = false,
     loop: boolean = false
   ) {
@@ -56,6 +56,7 @@ export class VideoController implements VideoControls
     if (this.logging && this.video.currentTime > 0 && this.video.duration > 0) {
       console.log(`Time update: ${this.video.currentTime.toFixed(2)} / ${this.video.duration.toFixed(2)}`)
     }
+
     this.eventHandlers.onTimeUpdate(this.video.currentTime, this.video.duration)
   }
 
@@ -185,17 +186,10 @@ export class VideoController implements VideoControls
     }
   }
 
-  async setVideoSource(file: File, muted: boolean = true): Promise<void>
+  async setVideoSource(file: File, muted: boolean = true): Promise<string>
   {
-    // Release the previous blob URL if it exists
-    if (this.currentBlobUrl) {
-      Filesystem.revokeObjectURL(this.currentBlobUrl)
-      this.currentBlobUrl = null
-    }
-
     const url = Filesystem.createObjectURL(file)
-
-    this.currentBlobUrl = url
+    this.createdBlobUrls.push(url)
 
     // Set the source
     this.setSource(url)
@@ -219,6 +213,7 @@ export class VideoController implements VideoControls
         throw error
       }
     }
+    return url;
   }
 
   /**
@@ -253,7 +248,10 @@ export class VideoController implements VideoControls
     try {
       const file = await Filesystem.open('video/*') as File
       if (file) {
-        await this.setVideoSource(file, false)
+        const url = await this.setVideoSource(file, false)
+        if (this.eventHandlers.onFileLoaded) {
+          this.eventHandlers.onFileLoaded(file, url);
+        }
       }
     } catch (error) {
       console.error('Error loading video file:', error)
@@ -311,10 +309,8 @@ export class VideoController implements VideoControls
     this.video.removeEventListener('loadedmetadata', this.handleLoadedMetadata)
     this.video.removeEventListener('error', this.handleError)
 
-    // Releasing the blob URL upon destruction
-    if (this.currentBlobUrl) {
-      Filesystem.revokeObjectURL(this.currentBlobUrl)
-      this.currentBlobUrl = null
-    }
+    // Releasing all created blob URLs upon destruction
+    this.createdBlobUrls.forEach(url => Filesystem.revokeObjectURL(url))
+    this.createdBlobUrls = []
   }
 }

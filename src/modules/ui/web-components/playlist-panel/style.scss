@@ -1,0 +1,79 @@
+:host {
+  position: fixed;
+  top: 150px;
+  left: calc(50% + 200px);
+  z-index: 100;
+  display: none; // Initially hidden
+  cursor: grab;
+}
+
+.playlist {
+  width: 300px;
+  max-height: 400px;
+  background-color: rgba(20, 20, 20, 0.85);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  &__handle {
+    width: 100%;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    cursor: inherit;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.4);
+      border-radius: 2px;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  &__item {
+    padding: 10px 15px;
+    color: #f1f1f1;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    position: relative;
+    padding-left: 25px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &--active {
+      background-color: rgba(var(--color-primary-rgb), 0.3);
+      font-weight: bold;
+
+      &::before {
+        content: '▶';
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%) scale(0.8);
+        color: var(--color-primary);
+      }
+    }
+  }
+}
