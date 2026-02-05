@@ -107,6 +107,26 @@ export class ThumbnailGenerator
     const options = { ...defaultOption, ...option }
 
     return new Promise((resolve, reject) => {
+      // Special case: if interval is 0, generate only one frame
+      if (options.interval === 0) {
+        const singleFrameHandler = () => {
+          this.generateFrame(options, thumbnails, 0)
+            .then(() => {
+              this.videoElement.removeEventListener('seeked', singleFrameHandler, false)
+              resolve(thumbnails)
+            })
+            .catch(reject)
+        }
+
+        this.videoElement.addEventListener('loadeddata', () => {
+          this.videoElement.addEventListener('seeked', singleFrameHandler, { once: true })
+          this.videoElement.currentTime = options.start
+        }, { once: true })
+
+        return
+      }
+
+      // Default logic for multiple frames
       const seekHandler = () => {
         this.generateFrame(options, thumbnails, count)
           .then(isFinished => {
@@ -145,7 +165,7 @@ export class ThumbnailGenerator
         const { videoWidth, videoHeight, duration, currentTime } = this.videoElement
         const { quality, interval, start, end, scale } = options
 
-        const isEnded = currentTime >= (end ?? duration)
+        const isEnded = currentTime >= (end ?? duration) && interval !== 0
         if (isEnded) {
           return resolve(true)
         }
