@@ -8,19 +8,17 @@
   height: 18px;
   cursor: pointer;
 
-  &:hover {
-    .player__hint {
-      opacity: 1;
-    }
+  &:hover .player__hint {
+    opacity: 1;
+  }
 
-    .player__line {
-      top: 5px;
-      bottom: 5px;
-    }
+  &:hover .player__line {
+    top: 5px;
+    bottom: 5px;
+  }
 
-    .player__line--ghost {
-      opacity: 1;
-    }
+  &:hover .player__line--ghost {
+    opacity: 1;
   }
 }
 

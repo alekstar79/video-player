@@ -22,7 +22,6 @@ export default class TimelineComponent extends BaseComponent
 
     this.shadow.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener)
     this.shadow.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener)
-    this.shadow.addEventListener('mouseleave', this.hideHoverPreview.bind(this))
   }
 
   private handleMouseDown(event: MouseEvent): void
@@ -70,13 +69,6 @@ export default class TimelineComponent extends BaseComponent
     leftPosition = Math.max(0, Math.min(leftPosition, rect.width - hintWidth))
 
     this.hint.style.left = `${leftPosition}px`
-    this.hint.style.opacity = '1'
-  }
-
-  private hideHoverPreview(): void
-  {
-    this.hoverBar.style.width = '0'
-    this.hint.style.opacity = '0'
   }
 
   public updateProgress(currentTime: number, duration: number): void
