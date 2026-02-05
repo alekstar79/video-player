@@ -3,8 +3,8 @@
  */
 export class Filesystem
 {
-  static BINARY: ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-  static DECIMAL: ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+  static BINARY = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+  static DECIMAL = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
   static createInput({ accept, multiple }: { accept: string; multiple: boolean }) {
     const input = document.createElement('input')
@@ -95,7 +95,7 @@ export class Filesystem
   static formatFileSize(
     bytes: number,
     decimals: number = 2,
-    useBinary: boolean = true,
+    useBinary: boolean = false,
     locale: string = 'en-US'
   ): string {
     if (bytes === 0) return '0 B'

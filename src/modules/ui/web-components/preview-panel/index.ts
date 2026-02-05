@@ -1,5 +1,5 @@
+import { Filesystem, Helpers } from '@/core/utils'
 import { BaseComponent } from '../BaseComponent'
-import { Helpers } from '@/core/utils/helpers'
 
 import template from './template.html?raw'
 import style from './style.scss?inline'
@@ -78,7 +78,7 @@ export default class PreviewPanelComponent extends BaseComponent
     this.infoFilename.textContent = data.filename
     this.infoResolution.textContent = data.resolution
     this.infoTimestamp.textContent = Helpers.formatTime(data.timestamp)
-    this.infoSize.textContent = Helpers.formatBytes(data.size)
+    this.infoSize.textContent = Filesystem.formatFileSize(data.size)
   }
 
   public clear()
