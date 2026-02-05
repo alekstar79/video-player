@@ -53,7 +53,7 @@ export default class VideoPlayerComponent extends BaseComponent
       showControls: this.showControls,
       logging: this.logging,
       controlsVisibility: this.controlsVisibility,
-    }, this.shadow) // The shadow root is for querying elements
+    }, this.shadow)
 
     this.resolveReady(this.playerInstance)
   }
