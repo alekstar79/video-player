@@ -1,4 +1,4 @@
-import { VideoControls, VideoElement, VideoEventHandlers } from './types'
+import { VideoControls, VideoElement, VideoEventHandlers } from '@/core/types'
 import { Filesystem } from '@/core/utils/filesystem'
 import { Helpers } from '@/core/utils/helpers'
 
