@@ -108,45 +108,40 @@ export class VideoPlayer
    */
   private async initializePlayer(): Promise<void>
   {
-    try {
-      // Wait for the components to be ready
-      await whenDefined()
+    // Wait for the components to be ready
+    await whenDefined()
 
-      this.playerElement = this.root.querySelector('.player') as HTMLElement
+    this.playerElement = this.root.querySelector('.player') as HTMLElement
+    if (!this.playerElement) {
+      throw new Error('Player element not found after rendering template')
+    }
 
-      if (!this.playerElement) {
-        throw new Error('Player element not found after rendering template')
-      }
-      // Applying dimensions to the container
-      this.applyContainerSizes()
+    // Applying dimensions to the container
+    this.applyContainerSizes()
 
-      // Initialize controllers
-      this.initializeControllers()
+    // Initialize controllers
+    this.initializeControllers()
+    this.initializeEventListeners()
 
-      this.initializeEventListeners()
+    // Apply Visibility settings
+    this.applyIndividualControlsVisibility()
 
-      // Apply Visibility settings
-      this.applyIndividualControlsVisibility()
+    // Bind event listeners
+    this.bindEventListeners()
+    this.bindKeyboardEvents()
 
-      // Bind event listeners
-      this.bindEventListeners()
-      this.bindKeyboardEvents()
+    // Set initial state of the looping icon
+    this.updateLoopButton()
 
-      // Set initial state of the looping icon
-      this.updateLoopButton()
+    // Load initial sources if provided
+    if (this.sources.length > 0) {
+      await this.loadInitialSources()
+      this.handleInterfaceHide()
+    }
 
-      // Load initial sources if provided
-      if (this.sources.length > 0) {
-        await this.loadInitialSources()
-        this.handleInterfaceHide()
-      }
-
-      // Initialize auto-hide only if controls are visible
-      if (this.isShowControls) {
-        this.initInterfaceAutoHide()
-      }
-    } catch (error) {
-      console.error('Failed to initialize video player:', error)
+    // Initialize auto-hide only if controls are visible
+    if (this.isShowControls) {
+      this.initInterfaceAutoHide()
     }
   }
 
