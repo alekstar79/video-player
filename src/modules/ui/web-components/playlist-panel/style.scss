@@ -20,10 +20,10 @@
 
   &__handle {
     width: 100%;
-    padding: 14px 0; // Задаем высоту через padding
+    padding: 12px 0;
     background-color: rgba(255, 255, 255, 0.1);
     cursor: inherit;
-    position: relative; // Контейнер для абсолютного позиционирования
+    position: relative;
 
     &::before {
       content: '';
@@ -63,7 +63,7 @@
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
     padding: 20px;
-    display: none; // Скрыто по умолчанию
+    display: none;
   }
 
   &__list {
@@ -75,13 +75,12 @@
   }
 
   &__item {
-    padding: 10px 15px;
+    position: relative;
+    padding: 10px 15px 10px 25px;
     color: #f1f1f1;
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.2s ease;
-    position: relative;
-    padding-left: 25px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
