@@ -59,6 +59,13 @@
     }
   }
 
+  &__empty-message {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    padding: 20px;
+    display: none; // Скрыто по умолчанию
+  }
+
   &__list {
     list-style: none;
     margin: 0;

@@ -53,10 +53,11 @@ export class VideoPlayer
   private timeDisplay!: TimeDisplayComponent
   private playlistButton!: PlaylistButtonComponent
   private playlistPanel!: PlaylistPanelComponent
+  private noFilesMessage!: HTMLElement
 
   // State
   private sources: string[] = []
-  private sourceTitleMap: Map<string, string> = new Map()
+  private sourceTitleMap: Map<string, string> = new Map();
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
 
@@ -122,6 +123,8 @@ export class VideoPlayer
       throw new Error('Player element not found after rendering template')
     }
 
+    this.noFilesMessage = this.root.querySelector('.player__no-files-message')!
+
     // Applying dimensions to the container
     this.applyContainerSizes()
 
@@ -143,11 +146,19 @@ export class VideoPlayer
     if (this.sources.length > 0) {
       await this.loadInitialSources()
       this.handleInterfaceHide()
+    } else {
+      this.toggleNoFilesMessage(true)
     }
 
     // Initialize auto-hide only if controls are visible
     if (this.isShowControls) {
       this.initInterfaceAutoHide()
+    }
+  }
+
+  private toggleNoFilesMessage(show: boolean): void {
+    if (this.noFilesMessage) {
+      this.noFilesMessage.style.display = show ? 'block' : 'none'
     }
   }
 
@@ -269,6 +280,7 @@ export class VideoPlayer
         this.sourceTitleMap.set(source, fileName)
       }
     }
+
     this.updatePlaylist()
 
     try {
@@ -921,8 +933,10 @@ export class VideoPlayer
     if (!this.sources.includes(source)) {
         this.sources.push(source)
         this.sourceTitleMap.set(source, title || source.split('/').pop()?.split('?')[0] || 'Unknown Video')
+
         this.updateSourceNavigationVisibility()
         this.updatePlaylist()
+        this.toggleNoFilesMessage(false)
     }
   }
 
@@ -1156,6 +1170,7 @@ export class VideoPlayer
   {
     this.isShowControls = false
     this.hideAllControls()
+
     if (this.interfaceTimeout) {
       clearTimeout(this.interfaceTimeout)
     }
@@ -1366,29 +1381,29 @@ export class VideoPlayer
     }
   }
 
-  private handleFileLoaded = async (file: File, url: string): Promise<void> => {
+  private async handleFileLoaded(file: File, url: string): Promise<void> {
     try {
-        const metadata = await getMetadata(file)
-        const title = metadata.title || file.name
-        this.sourceTitleMap.set(url, title)
+      const metadata = await getMetadata(file)
+      const title = metadata.title || file.name
+      this.sourceTitleMap.set(url, title)
 
-        if (!this.sources.includes(url)) {
-            this.addSource(url, title)
-        } else {
-            this.updatePlaylist()
-        }
+      if (!this.sources.includes(url)) {
+        this.addSource(url, title)
+      } else {
+        this.updatePlaylist()
+      }
 
-        const newIndex = this.sources.indexOf(url)
-        if (this.currentSourceIndex !== newIndex) {
-            this.currentSourceIndex = newIndex
-            this.events.emit('sourcechanged', this.currentSourceIndex)
-        }
+      const newIndex = this.sources.indexOf(url)
+      if (this.currentSourceIndex !== newIndex) {
+        this.currentSourceIndex = newIndex;
+        this.events.emit('sourcechanged', this.currentSourceIndex)
+      }
     } catch (error) {
-        console.error('Error processing loaded file:', error)
-        // Fallback if metadata fails
-        if (!this.sources.includes(url)) {
-            this.addSource(url, file.name)
-        }
+      console.error('Error processing loaded file:', error)
+      // Fallback if metadata fails
+      if (!this.sources.includes(url)) {
+          this.addSource(url, file.name)
+      }
     }
   }
 }
