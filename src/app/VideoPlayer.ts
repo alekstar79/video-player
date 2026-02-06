@@ -814,8 +814,8 @@ export class VideoPlayer
     const playBigIcon = this.root.querySelector<HTMLElement>('.j-play')
 
     if (pauseIcon && playBigIcon) {
-      pauseIcon.style.display = 'block'
-      playBigIcon.style.display = 'none'
+      pauseIcon.style.display = 'flex'
+      playBigIcon.classList.remove('player__main-icon--visible')
     }
 
     this.events.emit('play', undefined)
@@ -832,7 +832,7 @@ export class VideoPlayer
 
     if (pauseIcon && playBigIcon) {
       pauseIcon.style.display = 'none'
-      playBigIcon.style.display = 'block'
+      playBigIcon.classList.add('player__main-icon--visible')
     }
 
     this.events.emit('pause', undefined)

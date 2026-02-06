@@ -60,7 +60,7 @@ export class Helpers
   }
 
   static parseBoolean(value: any): boolean {
-    if (value === 'false' || value === false) return false
+    if (value === 'false') return false
 
     // Any other non-empty string or true will be considered true.
     return Boolean(value)
