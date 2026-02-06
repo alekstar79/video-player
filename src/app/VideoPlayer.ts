@@ -26,14 +26,6 @@ import {
   whenDefined
 } from '@/modules/ui/web-components'
 
-const parseBoolean = (value: any): boolean => {
-    if (value === 'false' || value === false) {
-        return false
-    }
-    // Any other non-empty string or true will be considered true.
-    return Boolean(value)
-}
-
 /**
  * Main Video Player class - orchestrates all components
  */
@@ -86,10 +78,10 @@ export class VideoPlayer
     this.root = root
 
     // Correctly parse boolean values from config
-    this.isShowControls = parseBoolean(config.showControls ?? true)
-    this.logging = parseBoolean(config.logging ?? false)
-    this.config.autoPlay = parseBoolean(config.autoPlay ?? false)
-    this.config.muted = parseBoolean(config.muted ?? false)
+    this.isShowControls = Helpers.parseBoolean(config.showControls ?? true)
+    this.config.autoPlay = Helpers.parseBoolean(config.autoPlay ?? false)
+    this.config.muted = Helpers.parseBoolean(config.muted ?? false)
+    this.logging = Helpers.parseBoolean(config.logging ?? false)
 
     this.events = new EventEmitter()
     this.controlsVisibility = {

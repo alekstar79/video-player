@@ -28,14 +28,6 @@ export class Helpers
   }
 
   /**
-   * Clamp a value between min and max
-   */
-  static clamp(value: number, min: number, max: number): number
-  {
-    return Math.min(Math.max(value, min), max)
-  }
-
-  /**
    * Captures a frame from a video element and returns it as a Blob.
    */
   static captureFrame(video: HTMLVideoElement, quality: number = 0.8): Promise<Blob | null>
@@ -57,5 +49,20 @@ export class Helpers
         reject(error)
       }
     })
+  }
+
+  /**
+   * Clamp a value between min and max
+   */
+  static clamp(value: number, min: number, max: number): number
+  {
+    return Math.min(Math.max(value, min), max)
+  }
+
+  static parseBoolean(value: any): boolean {
+    if (value === 'false' || value === false) return false
+
+    // Any other non-empty string or true will be considered true.
+    return Boolean(value)
   }
 }
