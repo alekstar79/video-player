@@ -17,7 +17,9 @@ const errorHandler = (error: Error | any) => {
   }
 }
 
-const getVideoUrl = (filename: string) => new URL(`../public/${filename}`, import.meta.url).href
+const getVideoUrl = (filename: string) => {
+  return new URL(`../public/${filename}`, import.meta.url).href
+}
 
 /**
  * Main application entry point
