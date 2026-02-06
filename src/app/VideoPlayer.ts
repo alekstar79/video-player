@@ -25,6 +25,15 @@ import {
   VolumeControlComponent,
   whenDefined
 } from '@/modules/ui/web-components'
+
+const parseBoolean = (value: any): boolean => {
+    if (value === 'false' || value === false) {
+        return false
+    }
+    // Any other non-empty string or true will be considered true.
+    return Boolean(value)
+}
+
 /**
  * Main Video Player class - orchestrates all components
  */
@@ -66,9 +75,6 @@ export class VideoPlayer
   private sourcePrevButton!: HTMLElement
   private sourceNextButton!: HTMLElement
 
-  private currentMuted: boolean = false
-  private currentVolume: number = 1.0
-
   private loopMode: LoopMode = 'none'
 
   public logging: boolean = false
@@ -78,8 +84,13 @@ export class VideoPlayer
     this.config = config
     this.container = config.container
     this.root = root
-    this.isShowControls = config.showControls ?? true
-    this.logging = Boolean(config.logging)
+
+    // Correctly parse boolean values from config
+    this.isShowControls = parseBoolean(config.showControls ?? true)
+    this.logging = parseBoolean(config.logging ?? false)
+    this.config.autoPlay = parseBoolean(config.autoPlay ?? false)
+    this.config.muted = parseBoolean(config.muted ?? false)
+
     this.events = new EventEmitter()
     this.controlsVisibility = {
       showOpenFile: true,
@@ -101,9 +112,7 @@ export class VideoPlayer
       }))
     }
 
-    this.loopMode = config.loopMode || (config.loop ? 'one' : 'none')
-    this.currentVolume = config.initialVolume ?? 1.0
-    this.currentMuted = config.muted ?? false
+    this.loopMode = config.loopMode || 'none'
 
     this.initializeControlsVisibility()
     this.initializePlayer().catch(console.error)
@@ -290,11 +299,16 @@ export class VideoPlayer
         console.log('Loading initial video sources:', this.sources.map(s => s.url))
       }
 
-      // Set muted to bypass auto-play restrictions
-      this.videoController.setMuted(true)
-
       // Loading the first source from the array
-      await this.loadSourceByIndex(0)
+      await this.loadSourceByIndex(0, false) // Don't auto-play here
+
+      if (this.config.autoPlay) {
+        // Mute is often required for autoplay to work
+        if (!this.config.muted) {
+           if (this.logging) console.warn('Autoplay may not work without the player being muted.')
+        }
+        await this.videoController.play()
+      }
 
       if (this.logging) {
         console.log('Initial video source loaded successfully')
@@ -328,7 +342,7 @@ export class VideoPlayer
     }
 
     try {
-      await this.loadSourceByIndex(nextIndex)
+      await this.loadSourceByIndex(nextIndex, true)
     } catch (error) {
       // Recursively try the next source
       await this.tryNextSource()
@@ -338,12 +352,13 @@ export class VideoPlayer
   /**
    * Load specific source by index
    */
-  public async loadSourceByIndex(index: number): Promise<void>
+  public async loadSourceByIndex(index: number, playAfterLoad?: boolean): Promise<void>
   {
     if (index < 0 || index >= this.sources.length) {
       throw new Error(`Invalid source index: ${index}`)
     }
 
+    const wasPlaying = playAfterLoad ?? this.videoController.getIsPlaying()
     const source = this.sources[index]
     this.currentSourceIndex = index
 
@@ -354,13 +369,16 @@ export class VideoPlayer
     // Adding animation to the buttons
     this.highlightSourceNavigation()
 
-    const savedVolume = this.currentVolume
-    const savedMuted = this.currentMuted
+    await this.videoController.loadVideoFromUrl(source.url)
 
-    await this.videoController.loadVideoFromUrl(source.url, true)
+    // Manually update volume controller UI after source change
+    this.volumeController.updateIcon(this.videoController.getVolume(), this.videoController.getMuted())
+    this.volumeController.setVolume(this.videoController.getVolume())
 
-    this.videoController.setVolume(savedVolume)
-    this.videoController.setMuted(savedMuted)
+
+    if (wasPlaying) {
+      await this.videoController.play()
+    }
 
     // Emit source changed event
     this.events.emit('sourcechanged', index)
@@ -460,8 +478,7 @@ export class VideoPlayer
         onError: this.handleError.bind(this),
         onFileLoaded: this.handleFileLoaded.bind(this),
       },
-      this.logging,
-      this.config.loop ?? false
+      this.logging
     )
 
     // Initialize Source Navigation Buttons
@@ -501,11 +518,21 @@ export class VideoPlayer
       (isFullscreen) => this.handleFullscreenChange(isFullscreen)
     )
 
-    // Set initial volume
-    if (this.config.initialVolume !== undefined) {
-      this.videoController.setVolume(this.config.initialVolume)
+    // Set initial volume and muted state
+    const initialVolume = this.config.initialVolume ?? 1.0
+    const isMuted = this.config.muted ?? false
+    this.videoController.setVolume(initialVolume)
+    this.videoController.setMuted(isMuted)
+    this.volumeController.setVolume(initialVolume)
+    this.volumeController.updateIcon(initialVolume, isMuted)
+
+
+    if (this.config.playbackRate !== undefined) {
+      this.videoController.setPlaybackRate(this.config.playbackRate)
     }
 
+
+    this.applyLoopMode()
     this.updateLoopButton()
 
     // Disable PiP button if not supported
@@ -780,8 +807,6 @@ export class VideoPlayer
 
   private handleVolumeChange(volume: number, muted: boolean): void
   {
-    this.currentVolume = volume
-    this.currentMuted = muted
     this.volumeController.setVolume(volume)
     this.volumeController.updateIcon(volume, muted)
     this.events.emit('volumechange', { volume, muted })
@@ -824,11 +849,11 @@ export class VideoPlayer
   private handleEnded(): void
   {
     if (this.loopMode === 'all') {
-      this.nextSource().catch(error => {
-        console.error('Failed to play next source in loop all mode:', error)
+      if (this.sources.length <= 1) return
+      const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
+      this.loadSourceByIndex(nextIndex, true).catch(error => {
+        console.error('Failed to play next source:', error)
       })
-    } else if (this.loopMode === 'one') {
-      // Video will restart itself due to loop=true
     } else {
       this.events.emit('ended', undefined)
     }
@@ -886,18 +911,7 @@ export class VideoPlayer
   private applyLoopMode(): void
   {
     if (!this.videoController) return
-
-    switch (this.loopMode) {
-      case 'none':
-        this.videoController.setLoop(false)
-        break
-      case 'one':
-        this.videoController.setLoop(true)
-        break
-      case 'all':
-        this.videoController.setLoop(false)
-        break
-    }
+    this.videoController.setLoop(this.loopMode === 'one')
   }
 
   /**
@@ -962,9 +976,10 @@ export class VideoPlayer
   setSources(sources: string[]): void
   {
     this.sources = sources.map(url => ({
-      url,
-      title: url.split('/').pop()?.split('?')[0] || 'Unknown Video'
+      title: url.split('/').pop()?.split('?')[0] || 'Unknown Video',
+      url
     }))
+
     this.currentSourceIndex = 0
     this.updateSourceNavigationVisibility()
     this.updatePlaylist()
@@ -977,8 +992,8 @@ export class VideoPlayer
   {
     if (!this.sources.some(s => s.url === url)) {
       this.sources.push({
-        url,
         title: title || url.split('/').pop()?.split('?')[0] || 'Unknown Video',
+        url,
         file
       })
 
@@ -1081,13 +1096,7 @@ export class VideoPlayer
    */
   async loadVideoFromUrl(url: string): Promise<void>
   {
-    const savedVolume = this.currentVolume
-    const savedMuted = this.currentMuted
-
-    await this.videoController.loadVideoFromUrl(url, true)
-
-    this.videoController.setVolume(savedVolume)
-    this.videoController.setMuted(savedMuted)
+    await this.videoController.loadVideoFromUrl(url)
 
     if (!this.sources.some(s => s.url === url)) {
       this.addSource(url)
@@ -1278,10 +1287,7 @@ export class VideoPlayer
    */
   setLoop(loop: boolean): void
   {
-    this.loopMode = loop ? 'one' : 'none'
-    this.applyLoopMode()
-    this.updateLoopButton()
-    this.events.emit('loopmodechanged', this.loopMode)
+    this.setLoopMode(loop ? 'one' : 'none')
   }
 
   /**
@@ -1399,23 +1405,6 @@ export class VideoPlayer
       (this.root as Document).fullscreenElement === this.playerElement
   }
 
-  /**
-   * Destroy the video player and clean up resources
-   */
-  destroy(): void
-  {
-    this.events.destroy()
-    this.videoController.destroy()
-    this.volumeController.destroy()
-    this.playbackController.destroy()
-    this.fullscreenController.destroy()
-    this.timelineController.destroy()
-
-    if (this.interfaceTimeout) {
-      clearTimeout(this.interfaceTimeout)
-    }
-  }
-
   private updatePlaylist(): void
   {
     if (this.playlistPanel) {
@@ -1503,6 +1492,23 @@ export class VideoPlayer
       })
     } catch (error) {
       console.error('Failed to generate preview:', error)
+    }
+  }
+
+  /**
+   * Destroy the video player and clean up resources
+   */
+  destroy(): void
+  {
+    this.events.destroy()
+    this.videoController.destroy()
+    this.volumeController.destroy()
+    this.playbackController.destroy()
+    this.fullscreenController.destroy()
+    this.timelineController.destroy()
+
+    if (this.interfaceTimeout) {
+      clearTimeout(this.interfaceTimeout)
     }
   }
 }

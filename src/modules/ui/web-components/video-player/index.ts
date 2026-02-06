@@ -8,15 +8,13 @@ import styles from './style.scss?inline'
 
 export default class VideoPlayerComponent extends BaseComponent
 {
-  private resolveReady!: (player: VideoPlayer) => void
-  private readonly readyPromise: Promise<VideoPlayer>
-  private playerInstance!: VideoPlayer
+  private playerInstance?: VideoPlayer
+  private readyPromise?: Promise<VideoPlayer>
 
   // Properties to accept configuration
   public initialSources: string[] = []
   public maxWidth!: string | number
   public aspectRatio!: string
-  public loop!: boolean
   public loopMode!: LoopMode
   public muted!: boolean
   public autoPlay!: boolean
@@ -29,37 +27,33 @@ export default class VideoPlayerComponent extends BaseComponent
   constructor()
   {
     super()
-    this.readyPromise = new Promise(resolve => {
-      this.resolveReady = resolve
-    })
-
     this.render(template, styles)
-  }
-
-  connectedCallback()
-  {
-    // Now the properties are available
-    this.playerInstance = new VideoPlayer({
-      container: this, // The host element itself is the container for styles
-      initialSources: this.initialSources,
-      maxWidth: this.maxWidth,
-      aspectRatio: this.aspectRatio,
-      loop: this.loop,
-      loopMode: this.loopMode,
-      muted: this.muted,
-      autoPlay: this.autoPlay,
-      initialVolume: this.initialVolume,
-      playbackRate: this.playbackRate,
-      showControls: this.showControls,
-      logging: this.logging,
-      controlsVisibility: this.controlsVisibility,
-    }, this.shadow)
-
-    this.resolveReady(this.playerInstance)
   }
 
   public whenReady(): Promise<VideoPlayer>
   {
-    return this.readyPromise
+    return (this.readyPromise ??= new Promise(
+      (resolve) => {
+        // Defer initialization to ensure all properties are set
+        setTimeout(() => {
+          this.playerInstance ??= new VideoPlayer({
+            container: this,
+            initialSources: this.initialSources,
+            maxWidth: this.maxWidth,
+            aspectRatio: this.aspectRatio,
+            loopMode: this.loopMode,
+            muted: this.muted,
+            autoPlay: this.autoPlay,
+            initialVolume: this.initialVolume,
+            playbackRate: this.playbackRate,
+            showControls: this.showControls,
+            logging: this.logging,
+            controlsVisibility: this.controlsVisibility,
+          }, this.shadow)
+
+          resolve(this.playerInstance)
+        })
+      }
+    ))
   }
 }

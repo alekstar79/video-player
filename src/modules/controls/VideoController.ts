@@ -18,13 +18,11 @@ export class VideoController implements VideoControls
   constructor(
     videoElement: HTMLVideoElement,
     eventHandlers: VideoEventHandlers & { onFileLoaded?: (file: File, url: string) => void },
-    logging: boolean = false,
-    loop: boolean = false
+    logging: boolean = false
   ) {
     this.video = videoElement as VideoElement
     this.eventHandlers = eventHandlers
     this.logging = logging
-    this.video.loop = loop
     this.initializeEventListeners()
   }
 
@@ -196,54 +194,27 @@ export class VideoController implements VideoControls
     }
   }
 
-  async setVideoSource(file: File, muted: boolean = true): Promise<string>
+  async setVideoSource(file: File): Promise<string>
   {
     const url = Filesystem.createObjectURL(file)
+
     this.createdBlobUrls.push(url)
-
-    // Set the source
     this.setSource(url)
-
-    // Set muted to bypass autoplay restrictions
-    if (this.video.muted !== muted) {
-      this.video.muted = muted
-    }
-
-    try {
-      // Trying to reproduce
-      await this.video.play()
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError' && !muted) {
-        // Auto-playback with sound is blocked
-        this.video.muted = true
-        await this.video.play()
-        this.handleVolumeChange()
-      } else if (error.name !== 'AbortError') {
-        throw error
-      }
-    }
-    return url;
+    // The decision to play is now handled by VideoPlayer based on autoPlay config
+    return url
   }
 
   /**
-   * Load video from URL with fetch and blob
+   * Load video from URL
    */
-  async loadVideoFromUrl(url: string, muted: boolean = true): Promise<void>
+  async loadVideoFromUrl(url: string): Promise<void>
   {
     try {
       if (this.logging) {
-        console.log('Trying direct source assignment')
+        console.log('Assigning video source URL directly')
       }
-
       this.setSource(url)
-
-      if (this.video.muted !== muted) {
-        this.video.muted = muted
-      }
-
-      this.handleVolumeChange()
-
-      await this.video.play()
+      // The decision to play is now up to the VideoPlayer class logic
     } catch (error: any) {
       // Ignore AbortError which can happen on rapid source changes
       if (error.name === 'AbortError') {
@@ -253,7 +224,7 @@ export class VideoController implements VideoControls
         return
       }
 
-      throw new Error(`[HTTP error]: Failed to load remote file. ${error.message}`)
+      throw new Error(`[Video Error]: Failed to load source. ${error.message}`)
     }
   }
 
@@ -265,7 +236,7 @@ export class VideoController implements VideoControls
       const file = await Filesystem.open('video/*') as File
 
       if (file) {
-        const url = await this.setVideoSource(file, false)
+        const url = await this.setVideoSource(file)
 
         if (this.eventHandlers.onFileLoaded) {
           this.eventHandlers.onFileLoaded(file, url)

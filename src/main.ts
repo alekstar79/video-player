@@ -1,5 +1,5 @@
 import { VideoPlayerComponent, registerComponents } from './modules/ui/web-components'
-
+import videos from '@/videos'
 import './styles/main.scss'
 
 const errorHandler = (error: Error | any) => {
@@ -41,16 +41,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Set configuration
     videoPlayer.initialSources = [
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      ...videos.map(({ source }) => source),
       getVideoUrl('Synthwave.mp4'),
       getVideoUrl('GalaxyNebula.mp4')
     ]
     videoPlayer.maxWidth = '960px'
     videoPlayer.aspectRatio = '16:9'
-    videoPlayer.loop = true
-    videoPlayer.loopMode = 'none'
+    videoPlayer.loopMode = 'all'
     videoPlayer.muted = true
-    videoPlayer.autoPlay = false
+    videoPlayer.autoPlay = true
     videoPlayer.initialVolume = 0.7
     videoPlayer.playbackRate = 1.0
     videoPlayer.showControls = true
@@ -73,7 +72,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const player = await videoPlayer.whenReady()
 
     player.on('loopmodechanged', (mode) => {
-      console.log('Loop mode changed to:', mode)
+      if (player.logging) {
+        console.log('Loop mode changed to:', mode)
+      }
     })
 
     if (player.logging) {
