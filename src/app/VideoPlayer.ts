@@ -1,4 +1,4 @@
-import { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig } from '@/core/types'
+import type { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig, VideoSource } from '@/types'
 
 import { EventEmitter } from '@/core/events/EventEmitter'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
@@ -25,7 +25,6 @@ import {
   VolumeControlComponent,
   whenDefined
 } from '@/modules/ui/web-components'
-
 /**
  * Main Video Player class - orchestrates all components
  */
@@ -60,9 +59,7 @@ export class VideoPlayer
   private noFilesMessage!: HTMLElement
 
   // State
-  private sources: string[] = []
-  private sourceTitleMap: Map<string, string> = new Map()
-  private sourceFileMap: Map<string, File> = new Map()
+  private sources: VideoSource[] = []
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
 
@@ -97,7 +94,13 @@ export class VideoPlayer
       showTimeline: true
     }
 
-    this.sources = config.initialSources || []
+    if (config.initialSources) {
+      this.sources = config.initialSources.map(source => ({
+        title: source.split('/').pop()?.split('?')[0] || 'Unknown Video',
+        url: source
+      }))
+    }
+
     this.loopMode = config.loopMode || (config.loop ? 'one' : 'none')
     this.currentVolume = config.initialVolume ?? 1.0
     this.currentMuted = config.muted ?? false
@@ -161,7 +164,8 @@ export class VideoPlayer
     }
   }
 
-  private toggleNoFilesMessage(show: boolean): void {
+  private toggleNoFilesMessage(show: boolean): void
+  {
     if (this.noFilesMessage) {
       this.noFilesMessage.style.display = show ? 'block' : 'none'
     }
@@ -279,18 +283,11 @@ export class VideoPlayer
       return
     }
 
-    for (const source of this.sources) {
-      if (!this.sourceTitleMap.has(source)) {
-        const fileName = source.split('/').pop()?.split('?')[0] || 'Unknown Video'
-        this.sourceTitleMap.set(source, fileName)
-      }
-    }
-
     this.updatePlaylist()
 
     try {
       if (this.logging) {
-        console.log('Loading initial video sources:', this.sources)
+        console.log('Loading initial video sources:', this.sources.map(s => s.url))
       }
 
       // Set muted to bypass auto-play restrictions
@@ -347,11 +344,11 @@ export class VideoPlayer
       throw new Error(`Invalid source index: ${index}`)
     }
 
-    const url = this.sources[index]
+    const source = this.sources[index]
     this.currentSourceIndex = index
 
     if (this.logging) {
-      console.log(`Loading video source ${index + 1}/${this.sources.length}:`, url)
+      console.log(`Loading video source ${index + 1}/${this.sources.length}:`, source.url)
     }
 
     // Adding animation to the buttons
@@ -360,7 +357,7 @@ export class VideoPlayer
     const savedVolume = this.currentVolume
     const savedMuted = this.currentMuted
 
-    await this.videoController.loadVideoFromUrl(url, true)
+    await this.videoController.loadVideoFromUrl(source.url, true)
 
     this.videoController.setVolume(savedVolume)
     this.videoController.setMuted(savedMuted)
@@ -454,14 +451,14 @@ export class VideoPlayer
     this.videoController = new VideoController(
       videoElement,
       {
-        onTimeUpdate: (currentTime, duration) => this.handleTimeUpdate(currentTime, duration),
-        onVolumeChange: (volume, muted) => this.handleVolumeChange(volume, muted),
-        onPlay: () => this.handlePlay(),
-        onPause: () => this.handlePause(),
-        onEnded: () => this.handleEnded(),
-        onLoadedMetadata: () => this.handleLoadedMetadata(),
-        onError: (error) => this.handleError(error),
-        onFileLoaded: this.handleFileLoaded,
+        onTimeUpdate: this.handleTimeUpdate.bind(this),
+        onVolumeChange: this.handleVolumeChange.bind(this),
+        onPlay: this.handlePlay.bind(this),
+        onPause: this.handlePause.bind(this),
+        onEnded: this.handleEnded.bind(this),
+        onLoadedMetadata: this.handleLoadedMetadata.bind(this),
+        onError: this.handleError.bind(this),
+        onFileLoaded: this.handleFileLoaded.bind(this),
       },
       this.logging,
       this.config.loop ?? false
@@ -964,7 +961,10 @@ export class VideoPlayer
    */
   setSources(sources: string[]): void
   {
-    this.sources = [...sources]
+    this.sources = sources.map(url => ({
+      url,
+      title: url.split('/').pop()?.split('?')[0] || 'Unknown Video'
+    }))
     this.currentSourceIndex = 0
     this.updateSourceNavigationVisibility()
     this.updatePlaylist()
@@ -973,22 +973,25 @@ export class VideoPlayer
   /**
    * Add source to the sources array
    */
-  addSource(source: string, title?: string): void
+  addSource(url: string, title?: string, file?: File): void
   {
-    if (!this.sources.includes(source)) {
-        this.sources.push(source)
-        this.sourceTitleMap.set(source, title || source.split('/').pop()?.split('?')[0] || 'Unknown Video')
+    if (!this.sources.some(s => s.url === url)) {
+      this.sources.push({
+        url,
+        title: title || url.split('/').pop()?.split('?')[0] || 'Unknown Video',
+        file
+      })
 
-        this.updateSourceNavigationVisibility()
-        this.updatePlaylist()
-        this.toggleNoFilesMessage(false)
+      this.updateSourceNavigationVisibility()
+      this.updatePlaylist()
+      this.toggleNoFilesMessage(false)
     }
   }
 
   /**
    * Get all available sources
    */
-  getSources(): string[]
+  getSources(): VideoSource[]
   {
     return [...this.sources]
   }
@@ -996,9 +999,9 @@ export class VideoPlayer
   /**
    * Get current source URL
    */
-  getCurrentSource(): string
+  getCurrentSource(): VideoSource | undefined
   {
-    return this.sources[this.currentSourceIndex] || ''
+    return this.sources[this.currentSourceIndex]
   }
 
   /**
@@ -1042,7 +1045,7 @@ export class VideoPlayer
    */
   async switchToSourceByUrl(url: string): Promise<void>
   {
-    const index = this.sources.indexOf(url)
+    const index = this.sources.findIndex(s => s.url === url)
     if (index === -1) {
       throw new Error('Source URL not found in sources array')
     }
@@ -1086,7 +1089,7 @@ export class VideoPlayer
     this.videoController.setVolume(savedVolume)
     this.videoController.setMuted(savedMuted)
 
-    if (!this.sources.includes(url)) {
+    if (!this.sources.some(s => s.url === url)) {
       this.addSource(url)
     }
   }
@@ -1413,47 +1416,53 @@ export class VideoPlayer
     }
   }
 
-  private updatePlaylist(): void {
+  private updatePlaylist(): void
+  {
     if (this.playlistPanel) {
-      this.playlistPanel.sources = this.sources.map(source => this.sourceTitleMap.get(source) || 'Unknown Video')
+      this.playlistPanel.sources = this.sources.map(source => source.title)
       this.playlistPanel.activeIndex = this.currentSourceIndex
     }
   }
 
-  private togglePlaylist(): void {
+  private togglePlaylist(): void
+  {
     if (this.playlistPanel) {
       this.playlistPanel.toggleAttribute('visible')
     }
   }
 
-  private handleFileLoaded = async (file: File, url: string): Promise<void> => {
+  private async handleFileLoaded(file: File, url: string): Promise<void>
+  {
     try {
-      this.sourceFileMap.set(url, file) // Сохраняем файл
       const metadata = await getMetadata(file)
       const title = metadata.title || file.name
-      this.sourceTitleMap.set(url, title)
 
-      if (!this.sources.includes(url)) {
-        this.addSource(url, title)
+      const existingSourceIndex = this.sources.findIndex(s => s.url === url)
+
+      if (existingSourceIndex !== -1) {
+        this.sources[existingSourceIndex] = { ...this.sources[existingSourceIndex], title, file }
       } else {
-        this.updatePlaylist()
+        this.addSource(url, title, file)
       }
 
-      const newIndex = this.sources.indexOf(url)
-      if (this.currentSourceIndex !== newIndex) {
+      this.updatePlaylist()
+
+      const newIndex = this.sources.findIndex(s => s.url === url)
+      if (this.currentSourceIndex !== newIndex && newIndex !== -1) {
         this.currentSourceIndex = newIndex;
         this.events.emit('sourcechanged', this.currentSourceIndex)
       }
     } catch (error) {
       console.error('Error processing loaded file:', error)
       // Fallback if metadata fails
-      if (!this.sources.includes(url)) {
-          this.addSource(url, file.name)
+      if (!this.sources.some(s => s.url === url)) {
+          this.addSource(url, file.name, file)
       }
     }
   }
 
-  private async togglePreviewPanel(): Promise<void> {
+  private async togglePreviewPanel(): Promise<void>
+  {
     if (this.sources.length === 0) return
 
     const isVisible = this.previewPanel.hasAttribute('visible')
@@ -1465,21 +1474,24 @@ export class VideoPlayer
     }
   }
 
-  private async generateAndShowPreview(): Promise<void> {
+  private async generateAndShowPreview(): Promise<void>
+  {
     if (this.sources.length === 0 || !this.previewPanel) return
 
     const videoElement = this.videoController.getVideoElement()
     const currentTime = videoElement.currentTime
     const currentSource = this.getCurrentSource()
 
+    if (!currentSource) return
+
     try {
       const blob = await Helpers.captureFrame(videoElement)
       if (!blob) {
-        console.error("Captured frame blob is null.")
+        console.error('Captured frame blob is null.')
         return
       }
 
-      const title = this.sourceTitleMap.get(currentSource) || 'preview'
+      const title = currentSource.title || 'preview'
       const filename = `${title.split('.').slice(0, -1).join('.')}_${Math.round(currentTime)}.jpg`
 
       this.previewPanel.update({
@@ -1490,7 +1502,7 @@ export class VideoPlayer
           size: blob.size
       })
     } catch (error) {
-      console.error("Failed to generate preview:", error)
+      console.error('Failed to generate preview:', error)
     }
   }
 }

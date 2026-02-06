@@ -1,35 +1,4 @@
-interface CustomChangeCallback {
-  (value: boolean, ev: Event): void
-}
-
-interface BoundingEventHandler {
-  (ev: Event): void
-}
-
-export interface FullscreenMethodMapping {
-  request: string;
-  exit: string;
-  element: string;
-  enabled: string;
-  change: string;
-  error: string;
-}
-
-export interface FullscreenHandler {
-  readonly isFullscreen: boolean;
-  readonly isEnabled: boolean;
-  readonly element: Element | null;
-  readonly requestMethod: string;
-  readonly exitMethod: string;
-
-  request(element?: Element, options?: FullscreenOptions): Promise<boolean>;
-  exit(): Promise<boolean>;
-  toggle(element?: Element, options?: FullscreenOptions): Promise<boolean>;
-  on(event: 'change' | 'error', callback: (event: Event) => void): void;
-  off(event: 'change' | 'error', callback: (event: Event) => void): void;
-  onchange(callback: (event: Event) => void): void;
-  onerror(callback: (event: Event) => void): void;
-}
+import type { BoundingEventHandler, CustomChangeCallback, FullscreenHandler, FullscreenMethodMapping } from '@/types'
 
 const methodMappings: FullscreenMethodMapping[] = [
   {

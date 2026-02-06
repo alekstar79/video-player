@@ -96,3 +96,42 @@ export interface VideoControls {
   toggleMute(): void;
   skip(seconds: number): void;
 }
+
+export interface VideoSource {
+  url: string;
+  title: string;
+  file?: File;
+}
+
+export interface CustomChangeCallback {
+  (value: boolean, ev: Event): void
+}
+
+export interface BoundingEventHandler {
+  (ev: Event): void
+}
+
+export interface FullscreenMethodMapping {
+  request: string;
+  exit: string;
+  element: string;
+  enabled: string;
+  change: string;
+  error: string;
+}
+
+export interface FullscreenHandler {
+  readonly isFullscreen: boolean;
+  readonly isEnabled: boolean;
+  readonly element: Element | null;
+  readonly requestMethod: string;
+  readonly exitMethod: string;
+
+  request(element?: Element, options?: FullscreenOptions): Promise<boolean>;
+  exit(): Promise<boolean>;
+  toggle(element?: Element, options?: FullscreenOptions): Promise<boolean>;
+  on(event: 'change' | 'error', callback: (event: Event) => void): void;
+  off(event: 'change' | 'error', callback: (event: Event) => void): void;
+  onchange(callback: (event: Event) => void): void;
+  onerror(callback: (event: Event) => void): void;
+}

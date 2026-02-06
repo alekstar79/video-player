@@ -1,4 +1,4 @@
-import type { ControlsVisibility, LoopMode } from '@/core/types'
+import type { ControlsVisibility, LoopMode } from '@/types'
 
 import { BaseComponent } from '../BaseComponent'
 import { VideoPlayer } from '@/app/VideoPlayer'
