@@ -63,6 +63,7 @@ export class VideoPlayer
   private sources: VideoSource[] = []
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
+  private isMouseOverControls: boolean = false
 
   private sourcePrevButton!: HTMLElement
   private sourceNextButton!: HTMLElement
@@ -684,6 +685,22 @@ export class VideoPlayer
 
     // Update playlist on source change
     this.on('sourcechanged', () => this.updatePlaylist())
+
+    // Listen for mouse over on control elements
+    const controlElements = this.root.querySelectorAll<HTMLElement>(
+      '.player__panel, .player__top-panel, .player__source-nav'
+    )
+
+    controlElements.forEach(element => {
+      element.addEventListener('mouseenter', () => {
+        this.isMouseOverControls = true
+        this.resetInterfaceTimeout()
+      })
+      element.addEventListener('mouseleave', () => {
+        this.isMouseOverControls = false
+        this.resetInterfaceTimeout()
+      })
+    })
   }
 
   /**
@@ -749,6 +766,9 @@ export class VideoPlayer
   private resetInterfaceTimeout(): void {
     this.showInterface()
     clearTimeout(this.interfaceTimeout)
+
+    if (this.isMouseOverControls) return
+
     this.interfaceTimeout = setTimeout(() => {
       if (this.videoController.getIsPlaying()) {
         this.hideInterface()
