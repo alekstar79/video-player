@@ -6,7 +6,8 @@ export class Filesystem
   static BINARY = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
   static DECIMAL = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
-  static createInput({ accept, multiple }: { accept: string; multiple: boolean }) {
+  static createInput({ accept, multiple }: { accept: string; multiple: boolean })
+  {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = accept
@@ -21,7 +22,8 @@ export class Filesystem
     return input
   }
 
-  static cleanup(input: HTMLElement) {
+  static cleanup(input: HTMLElement)
+  {
     document.body.removeChild(input)
   }
 
@@ -60,7 +62,7 @@ export class Filesystem
   /**
    * Create object URL from file (replacement for URL.createObjectURL)
    */
-  static createObjectURL(file: File): string
+  static createObjectURL(file: File | Blob): string
   {
     return URL.createObjectURL(file)
   }
@@ -115,5 +117,21 @@ export class Filesystem
     })
 
     return `${formatted} ${units[index]}`
+  }
+
+  /**
+   * Triggers a browser download for a given Blob.
+   */
+  static saveFile(blob: Blob, filename: string): void
+  {
+    const a = document.createElement('a')
+
+    a.download = filename
+    a.href = Filesystem.createObjectURL(blob)
+    document.body.appendChild(a)
+    a.click()
+
+    Filesystem.revokeObjectURL(a.href)
+    Filesystem.cleanup(a)
   }
 }

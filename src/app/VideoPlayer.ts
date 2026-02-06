@@ -689,18 +689,18 @@ export class VideoPlayer
     // Listen for mouse over on control elements
     const controlElements = this.root.querySelectorAll<HTMLElement>(
       '.player__panel, .player__top-panel, .player__source-nav'
-    )
+    );
 
     controlElements.forEach(element => {
       element.addEventListener('mouseenter', () => {
-        this.isMouseOverControls = true
-        this.resetInterfaceTimeout()
-      })
+        this.isMouseOverControls = true;
+        this.resetInterfaceTimeout();
+      });
       element.addEventListener('mouseleave', () => {
-        this.isMouseOverControls = false
-        this.resetInterfaceTimeout()
-      })
-    })
+        this.isMouseOverControls = false;
+        this.resetInterfaceTimeout();
+      });
+    });
   }
 
   /**
@@ -767,7 +767,9 @@ export class VideoPlayer
     this.showInterface()
     clearTimeout(this.interfaceTimeout)
 
-    if (this.isMouseOverControls) return
+    if (this.isMouseOverControls) {
+      return;
+    }
 
     this.interfaceTimeout = setTimeout(() => {
       if (this.videoController.getIsPlaying()) {
@@ -1493,7 +1495,7 @@ export class VideoPlayer
       }
 
       const title = currentSource.title || 'preview'
-      const filename = `${title.split('.').slice(0, -1).join('.')}_${Math.round(currentTime)}.jpg`
+      const filename = `${title.split('.').slice(0, -1).join('.')}.jpg`
 
       this.previewPanel.update({
           blob: blob,

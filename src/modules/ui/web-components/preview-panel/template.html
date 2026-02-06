@@ -2,32 +2,34 @@
   <div class="preview__handle">
     <button class="preview__close-btn" title="Close">&times;</button>
   </div>
+
   <div class="preview__content">
     <div class="preview__image-wrapper">
-      <img class="preview__image" style="display: none;" />
+      <img class="preview__image" style="display: none;"  alt="" src=""/>
       <div class="preview__placeholder">No preview</div>
+      <span class="preview__timestamp" data-info="timestamp"></span>
     </div>
-    <div class="preview__info">
-      <div class="info-item">
-        <span class="info-label">Filename:</span>
+
+    <div class="preview__details">
+      <div class="info-item info-item--full-width">
+        <span class="info-label">Name:</span>
         <span class="info-value" data-info="filename">-</span>
       </div>
+
       <div class="info-item">
         <span class="info-label">Resolution:</span>
         <span class="info-value" data-info="resolution">-</span>
       </div>
-      <div class="info-item">
-        <span class="info-label">Timestamp:</span>
-        <span class="info-value" data-info="timestamp">-</span>
-      </div>
+
       <div class="info-item">
         <span class="info-label">Size:</span>
         <span class="info-value" data-info="size">-</span>
       </div>
+
+      <div class="preview__actions">
+        <button class="preview__btn preview__btn--generate">Generate</button>
+        <button class="preview__btn preview__btn--save">Save</button>
+      </div>
     </div>
-  </div>
-  <div class="preview__actions">
-    <button class="preview__btn preview__btn--clear">Clear</button>
-    <button class="preview__btn preview__btn--generate">Generate</button>
   </div>
 </div>

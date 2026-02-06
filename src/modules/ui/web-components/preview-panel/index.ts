@@ -23,9 +23,12 @@ export default class PreviewPanelComponent extends BaseComponent
   private infoSize!: HTMLElement
 
   private generateButton!: HTMLButtonElement
-  private clearButton!: HTMLButtonElement
+  private saveButton!: HTMLButtonElement
   private closeButton!: HTMLButtonElement
   private handleElement!: HTMLElement
+
+  private currentBlob: Blob | null = null
+  private currentFilename: string = 'preview.jpg'
 
   private isDragging = false
   private offsetX = 0
@@ -58,7 +61,7 @@ export default class PreviewPanelComponent extends BaseComponent
     this.infoSize = this.shadow.querySelector('[data-info="size"]')!
 
     this.generateButton = this.shadow.querySelector('.preview__btn--generate')!
-    this.clearButton = this.shadow.querySelector('.preview__btn--clear')!
+    this.saveButton = this.shadow.querySelector('.preview__btn--save')!
     this.closeButton = this.shadow.querySelector('.preview__close-btn')!
     this.handleElement = this.shadow.querySelector('.preview__handle')!
 
@@ -68,6 +71,9 @@ export default class PreviewPanelComponent extends BaseComponent
 
   public update(data: IPreviewData)
   {
+    this.currentBlob = data.blob
+    this.currentFilename = data.filename
+
     if (data.blob) {
       this.previewImage.src = URL.createObjectURL(data.blob)
       this.previewImage.style.display = 'block'
@@ -83,19 +89,31 @@ export default class PreviewPanelComponent extends BaseComponent
 
   public clear()
   {
+    if (this.previewImage.src) {
+      URL.revokeObjectURL(this.previewImage.src)
+    }
     this.previewImage.src = ''
     this.previewImage.style.display = 'none'
     this.infoFilename.textContent = '-'
     this.infoResolution.textContent = '-'
     this.infoTimestamp.textContent = '-'
     this.infoSize.textContent = '-'
+    this.currentBlob = null
   }
 
   private bindClickEventHandlers()
   {
     this.generateButton.addEventListener('click', () => this.emit('generate'))
-    this.clearButton.addEventListener('click', () => this.clear())
+    this.saveButton.addEventListener('click', () => this.savePreview())
     this.closeButton.addEventListener('click', () => this.emit('close'))
+  }
+
+  private savePreview() {
+    if (!this.currentBlob) {
+      console.warn('No preview blob to save.')
+      return
+    }
+    Filesystem.saveFile(this.currentBlob, this.currentFilename)
   }
 
   private bindDragEventHandlers()
