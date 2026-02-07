@@ -17,6 +17,26 @@
   min-width: 26px;
 }
 
+/* Create an invisible element to bridge the gap for the HORIZONTAL slider */
+:host(:not(.player__volume--vertical)) .player__panel-button::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  width: 110px; /* Bridge the gap created by the slider's margin */
+}
+
+/* Create an invisible element to bridge the gap for the VERTICAL slider */
+:host(.player__volume--vertical) .player__panel-button::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  height: 110px; /* Bridge the vertical gap */
+}
+
 .player__volume-icon {
   min-width: 32px;
 }
@@ -33,15 +53,16 @@
   transition: opacity 0.2s ease, width 0.2s ease;
   position: absolute;
   visibility: hidden; /* Use visibility to prevent interaction when hidden */
+  z-index: 1;
 }
 
 /* --- Horizontal Mode (Default) --- */
 :host(:not(.player__volume--vertical)) .player__volume {
   left: 100%;
-  margin-left: 5px;
+  margin-left: 10px;
   top: 50%;
   /* Nudge up by 1px for better visual alignment */
-  transform: translateY(calc(-50% - 3px));
+  transform: translateY(calc(-50% - 2.5px));
 }
 
 /* --- Vertical Mode --- */
@@ -78,6 +99,7 @@
   background-color: #fff;
   border-radius: 50%;
   transition: all 0.15s ease-in-out;
+  pointer-events: none; // Prevents jitter on hover
 }
 
 .player__volume::-moz-range-thumb {
@@ -87,4 +109,5 @@
   background-color: #fff;
   border-radius: 50%;
   transition: all 0.15s ease-in-out;
+  pointer-events: none; // Prevents jitter on hover
 }

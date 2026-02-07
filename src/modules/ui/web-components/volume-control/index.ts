@@ -23,6 +23,10 @@ export default class VolumeControlComponent extends BaseComponent
       this.emit('volumechange', { volume: value })
     })
 
+    this.slider.addEventListener('mouseleave', () => {
+      this.slider.blur()
+    })
+
     this.button.addEventListener('click', (event) => {
       if (event.target === this.slider) return
 
