@@ -1,5 +1,5 @@
 import { VideoPlayerComponent, registerComponents } from './modules/ui/web-components'
-import videos from '@/videos'
+import videos from '../videos'
 import './styles/main.scss'
 
 const errorHandler = (error: Error | any) => {
