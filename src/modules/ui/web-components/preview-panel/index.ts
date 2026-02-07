@@ -54,6 +54,7 @@ export default class PreviewPanelComponent extends BaseComponent
 
   connectedCallback()
   {
+    this.id = 'preview-panel'
     this.previewImage = this.shadow.querySelector('.preview__image')!
     this.infoFilename = this.shadow.querySelector('[data-info="filename"]')!
     this.infoResolution = this.shadow.querySelector('[data-info="resolution"]')!

@@ -32,6 +32,7 @@ export default class PlaylistPanelComponent extends BaseComponent
 
   connectedCallback()
   {
+    this.id = 'playlist-panel'
     this.listElement = this.shadow.querySelector('.playlist__list')!
     this.handleElement = this.shadow.querySelector('.playlist__handle')!
     this.closeButton = this.shadow.querySelector('.playlist__close-btn')!

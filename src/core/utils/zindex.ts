@@ -2,11 +2,11 @@ import { ZIndexInterface } from '@/types'
 
 export class ZIndex implements ZIndexInterface
 {
-  static inatance: ZIndexInterface
+  static instance: ZIndexInterface
 
   static highestZIndex = 1000
 
-  static init = () => ZIndex.inatance ??= new ZIndex()
+  static init = () => ZIndex.instance ??= new ZIndex()
 
   private draggable: string[] = []
 
@@ -17,7 +17,9 @@ export class ZIndex implements ZIndexInterface
 
   push(uid: string): this
   {
-    this.draggable = [...new Set<string>([...this.draggable, uid])]
+    if (!this.draggable.includes(uid)) {
+      this.draggable.push(uid)
+    }
 
     return this
   }
@@ -25,43 +27,19 @@ export class ZIndex implements ZIndexInterface
   remove(uid: string): this
   {
     this.draggable = this.draggable.filter(id => id !== uid)
-
     return this
   }
 
   sort(uid: string): this
   {
-    this.draggable.sort(($1: number | string, $2: number | string) => {
-      return $1 === uid ? 1 : $2 === uid ? -1 : 0
-    })
+    const index = this.draggable.indexOf(uid)
+
+    if (index !== -1) {
+      this.draggable.splice(index, 1)
+      this.draggable.push(uid)
+    }
 
     return this
-  }
-}
-
-/**
- * Check if element is within viewport boundaries
- */
-export function isInViewport(element: HTMLElement): boolean
-{
-  const rect = element.getBoundingClientRect()
-
-  return (
-    rect.top >= 0 &&
-    rect.left >= 0 &&
-    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-  )
-}
-
-/**
- * Get viewport dimensions
- */
-export function getViewportDimensions(): { width: number; height: number }
-{
-  return {
-    width: window.innerWidth || document.documentElement.clientWidth,
-    height: window.innerHeight || document.documentElement.clientHeight
   }
 }
 

@@ -1,4 +1,4 @@
-import type { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig, VideoSource } from '@/types'
+import type { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig, VideoSource, ZIndexInterface } from '@/types'
 
 import { EventEmitter } from '@/core/events/EventEmitter'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
@@ -6,7 +6,7 @@ import { PlaybackController } from '@/modules/controls/PlaybackController'
 import { TimelineController } from '@/modules/controls/TimelineController'
 import { VideoController } from '@/modules/controls/VideoController'
 import { VolumeController } from '@/modules/controls/VolumeController'
-import { Helpers } from '@/core/utils/helpers'
+import { Helpers, zIndex } from '@/core/utils'
 import { getMetadata } from '@/core/metadata'
 
 import {
@@ -59,7 +59,11 @@ export class VideoPlayer
   private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
 
-  // ZIndex
+  // Z-Index
+  private zIndex: ZIndexInterface
+  private draggablePanels: HTMLElement[] = []
+
+  // State
   private sources: VideoSource[] = []
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
@@ -85,6 +89,7 @@ export class VideoPlayer
     this.logging = Helpers.parseBoolean(config.logging ?? false)
 
     this.events = new EventEmitter()
+    this.zIndex = zIndex()
     this.controlsVisibility = {
       showOpenFile: true,
       showPlayPause: true,
@@ -541,6 +546,7 @@ export class VideoPlayer
     }
 
     this.updatePlaylist()
+    this.initializeDraggablePanels()
   }
 
   /**
@@ -1507,6 +1513,30 @@ export class VideoPlayer
     } catch (error) {
       console.error('Failed to generate preview:', error)
     }
+  }
+
+  private initializeDraggablePanels()
+  {
+    this.draggablePanels = [this.playlistPanel, this.previewPanel]
+
+    this.draggablePanels.forEach(panel => {
+      if (panel) {
+        this.zIndex.push(panel.id)
+        panel.addEventListener('mousedown', () => {
+          this.handlePanelFocus(panel.id)
+        })
+      }
+    })
+  }
+
+  private handlePanelFocus(panelId: string)
+  {
+    this.zIndex.sort(panelId)
+    this.draggablePanels.forEach(panel => {
+      if (panel) {
+        panel.style.zIndex = this.zIndex.value(panel.id)
+      }
+    })
   }
 
   /**
