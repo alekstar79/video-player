@@ -195,24 +195,28 @@ export class VideoPlayer
     }
 
     // Defer the initial check to ensure the layout is stable
-    await this.waitForLayout()
+    await this.waitForLayout('.player__panel')
+
     this.handleResize()
   }
 
-  private async waitForLayout(): Promise<void> {
+  private waitForLayout(selector: string, timeout: number = 1000): Promise<void>
+  {
     return new Promise(resolve => {
-      const panel = this.root.querySelector('.player__panel') as HTMLElement;
-      
+      let el: HTMLElement | null
+
       const checkDimensions = () => {
-        if (panel && panel.offsetWidth > 0) {
-          resolve();
+        el ??= this.root.querySelector(selector)
+
+        if (!el || el.offsetWidth <= 0) {
+          requestAnimationFrame(checkDimensions)
         } else {
-          requestAnimationFrame(checkDimensions);
+          setTimeout(resolve, timeout)
         }
-      };
-  
-      checkDimensions();
-    });
+      }
+
+      checkDimensions()
+    })
   }
 
   private toggleNoFilesMessage(show: boolean): void
@@ -1649,35 +1653,36 @@ export class VideoPlayer
   }
 
   private adjustVolumeOrientation(): void {
-    if (!this.volumeControl || !this.controlsVisibility.showVolume) return;
-  
-    const panel = this.root.querySelector('.player__panel');
-    const panelBlocks = this.root.querySelectorAll('.player__panel-block');
-  
-    if (!panel || panelBlocks.length < 2) return;
-  
+    if (!this.volumeControl || !this.controlsVisibility.showVolume) return
+
+    const panel = this.root.querySelector('.player__panel')
+    const panelBlocks = this.root.querySelectorAll('.player__panel-block')
+
+    if (!panel || panelBlocks.length < 2) return
+
     // The extra width required for the horizontal volume slider
-    const horizontalVolumeWidth = 110; // 100px for the slider + 10px margin
-  
+    const horizontalVolumeWidth = 110 // 100px for the slider + 10px margin
+
     // Calculate the total width of all visible elements in both blocks
-    let totalChildrenWidth = 0;
+    let totalChildrenWidth = 0
     panelBlocks.forEach(block => {
       Array.from(block.children).forEach(child => {
-        const style = window.getComputedStyle(child as Element);
+        const style = window.getComputedStyle(child as Element)
+
         if (style.display !== 'none') {
           totalChildrenWidth += (child as HTMLElement).offsetWidth + parseInt(style.marginRight, 10);
         }
-      });
-    });
-  
+      })
+    })
+
     // Check if there's enough space for the horizontal volume slider
-    const availableWidth = panel.clientWidth - 30; // 30px for panel padding
-    const requiredWidth = totalChildrenWidth + horizontalVolumeWidth;
-  
+    const availableWidth = panel.clientWidth - 30 // 30px for panel padding
+    const requiredWidth = totalChildrenWidth + horizontalVolumeWidth
+
     if (requiredWidth > availableWidth) {
-      this.volumeControl.classList.add('player__volume--vertical');
+      this.volumeControl.classList.add('player__volume--vertical')
     } else {
-      this.volumeControl.classList.remove('player__volume--vertical');
+      this.volumeControl.classList.remove('player__volume--vertical')
     }
   }
 

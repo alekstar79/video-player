@@ -38,10 +38,10 @@
 /* --- Horizontal Mode (Default) --- */
 :host(:not(.player__volume--vertical)) .player__volume {
   left: 100%;
-  margin-left: 10px;
+  margin-left: 5px;
   top: 50%;
   /* Nudge up by 1px for better visual alignment */
-  transform: translateY(calc(-50% - 1px));
+  transform: translateY(calc(-50% - 3px));
 }
 
 /* --- Vertical Mode --- */
