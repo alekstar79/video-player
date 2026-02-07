@@ -135,3 +135,10 @@ export interface FullscreenHandler {
   onchange(callback: (event: Event) => void): void;
   onerror(callback: (event: Event) => void): void;
 }
+
+export interface ZIndexInterface {
+  value(uid: string): string;
+  push(uid: string): this;
+  remove(uid: string): this;
+  sort(uid: string): this;
+}

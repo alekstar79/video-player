@@ -59,7 +59,7 @@ export class VideoPlayer
   private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
 
-  // State
+  // ZIndex
   private sources: VideoSource[] = []
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
