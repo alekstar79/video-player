@@ -59,7 +59,7 @@ export class VideoPlayer
   private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
 
-  // Z-Index
+  // Z-Index & Resize
   private zIndex: ZIndexInterface
   private draggablePanels: HTMLElement[] = []
 
@@ -575,6 +575,9 @@ export class VideoPlayer
    */
   private bindEventListeners(): void
   {
+    this.adjustPanelsToViewport = this.adjustPanelsToViewport.bind(this)
+    window.addEventListener('resize', this.adjustPanelsToViewport)
+
     // Open File button
     const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
     if (openFileButton) {
@@ -695,18 +698,18 @@ export class VideoPlayer
     // Listen for mouse over on control elements
     const controlElements = this.root.querySelectorAll<HTMLElement>(
       '.player__panel, .player__top-panel, .player__source-nav'
-    );
+    )
 
     controlElements.forEach(element => {
       element.addEventListener('mouseenter', () => {
-        this.isMouseOverControls = true;
-        this.resetInterfaceTimeout();
-      });
+        this.isMouseOverControls = true
+        this.resetInterfaceTimeout()
+      })
       element.addEventListener('mouseleave', () => {
-        this.isMouseOverControls = false;
-        this.resetInterfaceTimeout();
-      });
-    });
+        this.isMouseOverControls = false
+        this.resetInterfaceTimeout()
+      })
+    })
   }
 
   /**
@@ -1539,17 +1542,46 @@ export class VideoPlayer
     })
   }
 
+  private adjustPanelsToViewport()
+  {
+    this.draggablePanels.forEach(panel => {
+      if (panel.style.display === 'none' || !panel.style.left) return
+
+      const panelRect = panel.getBoundingClientRect()
+      let currentX = parseFloat(panel.style.left)
+      let currentY = parseFloat(panel.style.top)
+
+      if (panelRect.right > window.innerWidth) {
+        currentX = window.innerWidth - panelRect.width
+      }
+      if (panelRect.bottom > window.innerHeight) {
+        currentY = window.innerHeight - panelRect.height
+      }
+      if (panelRect.left < 0) {
+        currentX = 0
+      }
+      if (panelRect.top < 0) {
+        currentY = 0
+      }
+
+      panel.style.left = `${currentX}px`
+      panel.style.top = `${currentY}px`
+    })
+  }
+
   /**
    * Destroy the video player and clean up resources
    */
   destroy(): void
   {
-    this.events.destroy()
+    window.removeEventListener('resize', this.adjustPanelsToViewport)
+
     this.videoController.destroy()
     this.volumeController.destroy()
     this.playbackController.destroy()
     this.fullscreenController.destroy()
     this.timelineController.destroy()
+    this.events.destroy()
 
     if (this.interfaceTimeout) {
       clearTimeout(this.interfaceTimeout)

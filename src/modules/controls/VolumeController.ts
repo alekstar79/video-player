@@ -71,6 +71,7 @@ export class VolumeController
   {
     const currentVolume = this.getVolume()
     const newVolume = Helpers.clamp(currentVolume + delta, 0, 1)
+
     this.setVolume(newVolume)
     this.onVolumeChange(newVolume)
   }
