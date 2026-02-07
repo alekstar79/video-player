@@ -32,10 +32,10 @@ export default class SkipButtonComponent extends BaseComponent
     if (name === 'direction') {
       this.icon.classList.toggle('fa-backward', newValue === 'backward')
       this.icon.classList.toggle('fa-forward', newValue === 'forward')
-      this.button.title = `Skip ${newValue} ${this.getAttribute('seconds') || 5}s`
+      this.button.title = `Skip ${newValue}`
     }
     if (name === 'seconds') {
-      this.button.title = `Skip ${this.getAttribute('direction')} ${newValue}s`
+      this.button.title = `Skip ${this.getAttribute('direction')}`
     }
   }
 }

@@ -59,10 +59,34 @@ export class Helpers
     return Math.min(Math.max(value, min), max)
   }
 
-  static parseBoolean(value: any): boolean {
+  static parseBoolean(value: any): boolean
+  {
     if (value === 'false') return false
 
     // Any other non-empty string or true will be considered true.
     return Boolean(value)
+  }
+
+  /**
+   * Convert a string to camelCase, preserving the first letter's case.
+   */
+  static toCamelCase(str: string): string
+  {
+    return str.replace(/\s+(.)/g, (_, group) => group.toUpperCase())
+  }
+
+  /**
+   * Check if a URL is cross-origin
+   */
+  static isCrossOrigin(url: string): boolean
+  {
+    if (url.startsWith('blob:') || url.startsWith('data:')) {
+      return false
+    }
+
+    const a = document.createElement('a')
+    a.href = url
+
+    return a.origin !== window.location.origin
   }
 }

@@ -385,7 +385,7 @@ export class VideoPlayer
     // Adding animation to the buttons
     this.highlightSourceNavigation()
 
-    await this.videoController.loadVideoFromUrl(source.url)
+    await this.videoController.loadVideoFromUrl(source.url, source.thumb)
 
     // Manually update volume controller UI after source change
     this.volumeController.updateIcon(this.videoController.getVolume(), this.videoController.getMuted())
@@ -794,9 +794,7 @@ export class VideoPlayer
     this.showInterface()
     clearTimeout(this.interfaceTimeout)
 
-    if (this.isMouseOverControls) {
-      return;
-    }
+    if (this.isMouseOverControls) return
 
     this.interfaceTimeout = setTimeout(() => {
       if (this.videoController.getIsPlaying()) {
@@ -1028,6 +1026,7 @@ export class VideoPlayer
   addSource(source: Partial<VideoSource>): void
   {
     const normalizedSource = this.normalizeSources([source])[0]
+
     if (!this.sources.some(s => s.url === normalizedSource.url)) {
       this.sources.push(normalizedSource)
 
@@ -1465,13 +1464,7 @@ export class VideoPlayer
         title = metadata.title || file.name
       }
 
-      const newSource: VideoSource = {
-        ...existingSource,
-        title,
-        url,
-        file,
-      }
-
+      const newSource: VideoSource = { ...existingSource, title, url, file }
       const existingSourceIndex = this.sources.findIndex(s => s.url === url)
 
       if (existingSourceIndex !== -1) {
@@ -1481,6 +1474,7 @@ export class VideoPlayer
       }
 
       this.updatePlaylist()
+      this.videoController.setPoster(newSource.thumb)
 
       const newIndex = this.sources.findIndex(s => s.url === url)
       if (this.currentSourceIndex !== newIndex && newIndex !== -1) {
@@ -1513,8 +1507,8 @@ export class VideoPlayer
     if (this.sources.length === 0 || !this.previewPanel) return
 
     const videoElement = this.videoController.getVideoElement()
-    const currentTime = videoElement.currentTime
     const currentSource = this.getCurrentSource()
+    const currentTime = videoElement.currentTime
 
     if (!currentSource) return
 
@@ -1526,14 +1520,16 @@ export class VideoPlayer
       }
 
       const title = currentSource.title || 'preview'
-      const filename = `${title.split('.').slice(0, -1).join('.')}.jpg`
+      const lastDotIndex = title.lastIndexOf('.')
+      const baseName = lastDotIndex !== -1 ? title.substring(0, lastDotIndex) : title
+      const filename = `${Helpers.toCamelCase(baseName)}.jpg`
 
       this.previewPanel.update({
-          blob: blob,
-          filename: filename,
-          resolution: `${videoElement.videoWidth}x${videoElement.videoHeight}`,
-          timestamp: currentTime,
-          size: blob.size
+        blob: blob,
+        filename: filename,
+        resolution: `${videoElement.videoWidth}x${videoElement.videoHeight}`,
+        timestamp: currentTime,
+        size: blob.size
       })
     } catch (error) {
       console.error('Failed to generate preview:', error)

@@ -1,6 +1,5 @@
 import { VideoControls, VideoElement, VideoEventHandlers } from '@/types'
-import { Filesystem } from '@/core/utils/filesystem'
-import { Helpers } from '@/core/utils/helpers'
+import { Filesystem, Helpers } from '@/core/utils'
 
 /**
  * Controller for video element and basic playback operations
@@ -50,7 +49,6 @@ export class VideoController implements VideoControls
 
   private handleTimeUpdate(): void
   {
-    // Debug logging
     if (this.logging && this.video.currentTime > 0 && this.video.duration > 0) {
       console.log(`Time update: ${this.video.currentTime.toFixed(2)} / ${this.video.duration.toFixed(2)}`)
     }
@@ -107,7 +105,7 @@ export class VideoController implements VideoControls
   // Public API Methods
 
   public getVideoElement(): HTMLVideoElement {
-    return this.video;
+    return this.video
   }
 
   async play(): Promise<void>
@@ -186,7 +184,18 @@ export class VideoController implements VideoControls
 
   setSource(src: string): void
   {
+    this.video.pause()
+    this.video.removeAttribute('src')
+    this.video.load()
+
+    if (Helpers.isCrossOrigin(src)) {
+      this.video.crossOrigin = 'anonymous'
+    } else {
+      this.video.crossOrigin = null
+    }
+
     this.video.src = src
+    this.video.load()
     this.hasSource = true
 
     if (this.logging) {
@@ -200,6 +209,7 @@ export class VideoController implements VideoControls
 
     this.createdBlobUrls.push(url)
     this.setSource(url)
+
     // The decision to play is now handled by VideoPlayer based on autoPlay config
     return url
   }
@@ -207,25 +217,28 @@ export class VideoController implements VideoControls
   /**
    * Load video from URL
    */
-  async loadVideoFromUrl(url: string): Promise<void>
+  async loadVideoFromUrl(url: string, thumb?: string): Promise<void>
   {
-    try {
-      if (this.logging) {
-        console.log('Assigning video source URL directly')
-      }
-      this.setSource(url)
-      // The decision to play is now up to the VideoPlayer class logic
-    } catch (error: any) {
-      // Ignore AbortError which can happen on rapid source changes
-      if (error.name === 'AbortError') {
-        if (this.logging) {
-          console.log('Video load aborted, likely due to rapid source change.')
-        }
-        return
-      }
+    this.setPoster(thumb)
+    this.setSource(url)
+  }
 
-      throw new Error(`[Video Error]: Failed to load source. ${error.message}`)
+  public setPoster(thumb?: string): void {
+    this.video.poster = ''
+
+    if (!thumb) return
+
+    const img = new Image()
+
+    img.crossOrigin = 'anonymous'
+    img.onerror = () => {
+      console.warn(`Could not load poster image: ${thumb}`)
     }
+    img.onload = () => {
+      this.video.poster = thumb
+    }
+
+    img.src = thumb
   }
 
   /**
