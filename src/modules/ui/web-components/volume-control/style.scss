@@ -40,13 +40,14 @@
   left: 100%;
   margin-left: 10px;
   top: 50%;
-  transform: translateY(-50%);
+  /* Nudge up by 1px for better visual alignment */
+  transform: translateY(calc(-50% - 1px));
 }
 
 /* --- Vertical Mode --- */
 :host(.player__volume--vertical) .player__volume {
   left: 50%;
-  bottom: calc(100% + 15px);
+  bottom: calc(100% + 35px); /* Adjusted to the optimal distance */
   transform-origin: center;
   transform: translateX(-50%) rotate(-90deg);
 }

@@ -194,7 +194,25 @@ export class VideoPlayer
       this.initInterfaceAutoHide()
     }
 
+    // Defer the initial check to ensure the layout is stable
+    await this.waitForLayout()
     this.handleResize()
+  }
+
+  private async waitForLayout(): Promise<void> {
+    return new Promise(resolve => {
+      const panel = this.root.querySelector('.player__panel') as HTMLElement;
+      
+      const checkDimensions = () => {
+        if (panel && panel.offsetWidth > 0) {
+          resolve();
+        } else {
+          requestAnimationFrame(checkDimensions);
+        }
+      };
+  
+      checkDimensions();
+    });
   }
 
   private toggleNoFilesMessage(show: boolean): void
