@@ -1,4 +1,4 @@
-import type { ControlsVisibility, LoopMode } from '@/types'
+import type { ControlsVisibility, LoopMode, VideoSource } from '@/types'
 
 import { BaseComponent } from '../BaseComponent'
 import { VideoPlayer } from '@/app/VideoPlayer'
@@ -12,7 +12,7 @@ export default class VideoPlayerComponent extends BaseComponent
   private readyPromise?: Promise<VideoPlayer>
 
   // Properties to accept configuration
-  public initialSources: string[] = []
+  public initialSources: (string | Partial<VideoSource>)[] = []
   public maxWidth!: string | number
   public aspectRatio!: string
   public loopMode!: LoopMode

@@ -28,7 +28,7 @@ export interface VideoPlayerConfig {
   muted?: boolean;
   showControls: boolean;
   controlsVisibility?: ControlsVisibility;
-  initialSources?: string[];
+  initialSources?: (string | Partial<VideoSource>)[];
   maxWidth?: string | number; // '100%', 1200, '1200px'
   width?: string | number;    // '100%', 800, '800px'
   height?: string | number;   // '100%', 450, '450px'
@@ -98,8 +98,10 @@ export interface VideoControls {
 }
 
 export interface VideoSource {
-  url: string;
   title: string;
+  url: string;
+  description?: string;
+  thumb?: string;
   file?: File;
 }
 

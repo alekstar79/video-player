@@ -104,16 +104,34 @@ export class VideoPlayer
     }
 
     if (config.initialSources) {
-      this.sources = config.initialSources.map(source => ({
-        title: source.split('/').pop()?.split('?')[0] || 'Unknown Video',
-        url: source
-      }))
+      this.setSources(config.initialSources)
     }
 
     this.loopMode = config.loopMode || 'none'
 
     this.initializeControlsVisibility()
     this.initializePlayer().catch(console.error)
+  }
+
+  private normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[] {
+    return sources.map(source => {
+      if (typeof source === 'string') {
+        return {
+          title: source.split('/').pop()?.split('?')[0] || 'Unknown Video',
+          url: source
+        }
+      }
+
+      // Handle object sources, mapping 'source' to 'url'
+      const url = (source as any).source || source.url
+
+      return {
+        title: source.title || url?.split('/').pop()?.split('?')[0] || 'Unknown Video',
+        url: url || '',
+        description: source.description,
+        thumb: source.thumb
+      }
+    })
   }
 
   private initializeControlsVisibility(): void
@@ -996,13 +1014,9 @@ export class VideoPlayer
   /**
    * Set video sources array
    */
-  setSources(sources: string[]): void
+  setSources(sources: (string | Partial<VideoSource>)[]): void
   {
-    this.sources = sources.map(url => ({
-      title: url.split('/').pop()?.split('?')[0] || 'Unknown Video',
-      url
-    }))
-
+    this.sources = this.normalizeSources(sources)
     this.currentSourceIndex = 0
     this.updateSourceNavigationVisibility()
     this.updatePlaylist()
@@ -1011,14 +1025,11 @@ export class VideoPlayer
   /**
    * Add source to the sources array
    */
-  addSource(url: string, title?: string, file?: File): void
+  addSource(source: Partial<VideoSource>): void
   {
-    if (!this.sources.some(s => s.url === url)) {
-      this.sources.push({
-        title: title || url.split('/').pop()?.split('?')[0] || 'Unknown Video',
-        url,
-        file
-      })
+    const normalizedSource = this.normalizeSources([source])[0]
+    if (!this.sources.some(s => s.url === normalizedSource.url)) {
+      this.sources.push(normalizedSource)
 
       this.updateSourceNavigationVisibility()
       this.updatePlaylist()
@@ -1122,7 +1133,7 @@ export class VideoPlayer
     await this.videoController.loadVideoFromUrl(url)
 
     if (!this.sources.some(s => s.url === url)) {
-      this.addSource(url)
+      this.addSource({ url })
     }
   }
 
@@ -1446,29 +1457,40 @@ export class VideoPlayer
   private async handleFileLoaded(file: File, url: string): Promise<void>
   {
     try {
-      const metadata = await getMetadata(file)
-      const title = metadata.title || file.name
+      const existingSource = this.sources.find(s => s.url === url)
+      let title = existingSource?.title
+
+      if (!title) {
+        const metadata = await getMetadata(file)
+        title = metadata.title || file.name
+      }
+
+      const newSource: VideoSource = {
+        ...existingSource,
+        title,
+        url,
+        file,
+      }
 
       const existingSourceIndex = this.sources.findIndex(s => s.url === url)
 
       if (existingSourceIndex !== -1) {
-        this.sources[existingSourceIndex] = { ...this.sources[existingSourceIndex], title, file }
+        this.sources[existingSourceIndex] = newSource
       } else {
-        this.addSource(url, title, file)
+        this.sources.push(newSource)
       }
 
       this.updatePlaylist()
 
       const newIndex = this.sources.findIndex(s => s.url === url)
       if (this.currentSourceIndex !== newIndex && newIndex !== -1) {
-        this.currentSourceIndex = newIndex;
+        this.currentSourceIndex = newIndex
         this.events.emit('sourcechanged', this.currentSourceIndex)
       }
     } catch (error) {
       console.error('Error processing loaded file:', error)
-      // Fallback if metadata fails
       if (!this.sources.some(s => s.url === url)) {
-          this.addSource(url, file.name, file)
+        this.addSource({ url, title: file.name, file })
       }
     }
   }
@@ -1525,9 +1547,7 @@ export class VideoPlayer
     this.draggablePanels.forEach(panel => {
       if (panel) {
         this.zIndex.push(panel.id)
-        panel.addEventListener('mousedown', () => {
-          this.handlePanelFocus(panel.id)
-        })
+        panel.addEventListener('mousedown', () => this.handlePanelFocus(panel.id))
       }
     })
   }

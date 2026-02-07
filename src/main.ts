@@ -43,9 +43,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Set configuration
     videoPlayer.initialSources = [
-      ...videos.map(({ source }) => source),
       getVideoUrl('Synthwave.mp4'),
-      getVideoUrl('GalaxyNebula.mp4')
+      getVideoUrl('GalaxyNebula.mp4'),
+      ...videos
     ]
     videoPlayer.maxWidth = '960px'
     videoPlayer.aspectRatio = '16:9'
