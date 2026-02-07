@@ -58,6 +58,7 @@ export class VideoPlayer
   private previewButton!: PreviewButtonComponent
   private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
+  private sourceTitleElement!: HTMLElement
 
   // Z-Index & Resize
   private zIndex: ZIndexInterface
@@ -67,6 +68,7 @@ export class VideoPlayer
   private sources: VideoSource[] = []
   private currentSourceIndex: number = 0
   private interfaceTimeout!: ReturnType<typeof setTimeout>
+  private titleTimeout!: ReturnType<typeof setTimeout>
   private isMouseOverControls: boolean = false
 
   private sourcePrevButton!: HTMLElement
@@ -157,6 +159,7 @@ export class VideoPlayer
     }
 
     this.noFilesMessage = this.root.querySelector('.player__no-files-message')!
+    this.sourceTitleElement = this.root.querySelector('.player__source-title')!
 
     // Applying dimensions to the container
     this.applyContainerSizes()
@@ -384,6 +387,7 @@ export class VideoPlayer
 
     // Adding animation to the buttons
     this.highlightSourceNavigation()
+    this.showSourceTitle()
 
     await this.videoController.loadVideoFromUrl(source.url, source.thumb)
 
@@ -609,6 +613,9 @@ export class VideoPlayer
     if (this.playPauseButton) {
       this.playPauseButton.addEventListener('click', async () => {
         this.resetInterfaceTimeout()
+        if (!this.videoController.getIsPlaying()) {
+          this.showSourceTitle()
+        }
         await this.videoController.togglePlay()
       })
     }
@@ -633,8 +640,17 @@ export class VideoPlayer
     // Video click to play/pause and open file dialog if no source
     const videoElement = this.root.querySelector<HTMLElement>('.player__video')
     if (videoElement) {
-      videoElement.addEventListener('click', () => this.videoController.togglePlay())
-      videoElement.addEventListener('dblclick', () => this.toggleFullscreen())
+      videoElement.addEventListener('click', async () => {
+        if (!this.videoController.getIsPlaying()) {
+          this.showSourceTitle()
+        }
+
+        await this.videoController.togglePlay()
+      })
+
+      videoElement.addEventListener('dblclick', async () => {
+        await this.toggleFullscreen()
+      })
     }
 
     // Fullscreen button
@@ -1534,6 +1550,22 @@ export class VideoPlayer
     } catch (error) {
       console.error('Failed to generate preview:', error)
     }
+  }
+
+  private showSourceTitle(): void
+  {
+    if (!this.sourceTitleElement) return
+
+    const currentSource = this.getCurrentSource()
+    if (!currentSource || !currentSource.title) return
+
+    this.sourceTitleElement.textContent = currentSource.title
+    this.sourceTitleElement.classList.add('visible')
+
+    clearTimeout(this.titleTimeout)
+    this.titleTimeout = setTimeout(() => {
+      this.sourceTitleElement.classList.remove('visible')
+    }, 4000)
   }
 
   private initializeDraggablePanels()
