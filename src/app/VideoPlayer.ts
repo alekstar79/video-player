@@ -59,10 +59,13 @@ export class VideoPlayer
   private previewPanel!: PreviewPanelComponent
   private noFilesMessage!: HTMLElement
   private sourceTitleElement!: HTMLElement
+  private volumeControl!: VolumeControlComponent
 
   // Z-Index & Resize
   private zIndex: ZIndexInterface
   private draggablePanels: HTMLElement[] = []
+  private readonly resizeHandlers: Map<string, () => void> = new Map()
+  private boundHandleResize!: () => void
 
   // State
   private sources: VideoSource[] = []
@@ -190,6 +193,8 @@ export class VideoPlayer
     if (this.isShowControls) {
       this.initInterfaceAutoHide()
     }
+
+    this.handleResize()
   }
 
   private toggleNoFilesMessage(show: boolean): void
@@ -480,8 +485,8 @@ export class VideoPlayer
     this.playlistPanel = this.root.querySelector('playlist-panel')!
     this.previewButton = this.root.querySelector('preview-button')!
     this.previewPanel = this.root.querySelector('preview-panel')!
+    this.volumeControl = this.root.querySelector<VolumeControlComponent>('volume-control')!
 
-    const volumeControl = this.root.querySelector<VolumeControlComponent>('volume-control')!
     const speedOptions = this.root.querySelector<SpeedOptionsComponent>('speed-options')!
     const timelineControl = this.root.querySelector<TimelineComponent>('timeline-control')!
 
@@ -511,7 +516,7 @@ export class VideoPlayer
 
     // Initialize Volume Controller
     this.volumeController = new VolumeController(
-      volumeControl,
+      this.volumeControl,
       {
         onVolumeChange: (volume) => this.videoController.setVolume(volume),
         onMuteToggle: () => this.videoController.toggleMute()
@@ -597,8 +602,11 @@ export class VideoPlayer
    */
   private bindEventListeners(): void
   {
-    this.adjustPanelsToViewport = this.adjustPanelsToViewport.bind(this)
-    window.addEventListener('resize', this.adjustPanelsToViewport)
+    this.boundHandleResize = this.handleResize.bind(this)
+    window.addEventListener('resize', this.boundHandleResize)
+
+    this.resizeHandlers.set('adjustPanelsToViewport', this.adjustPanelsToViewport.bind(this))
+    this.resizeHandlers.set('adjustVolumeOrientation', this.adjustVolumeOrientation.bind(this))
 
     // Open File button
     const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
@@ -829,6 +837,10 @@ export class VideoPlayer
 
   // Event Handlers
 
+  private handleResize(): void {
+    this.resizeHandlers.forEach(handler => handler())
+  }
+
   private updateSourceNavigationVisibility(): void
   {
     const hasMultipleSources = this.sources.length > 1
@@ -942,6 +954,7 @@ export class VideoPlayer
     this.playerElement.classList.toggle('player--fullscreen', isFullscreen)
 
     this.adjustSourceNavigationPosition()
+    this.handleResize()
 
     this.events.emit('fullscreenchange', isFullscreen)
   }
@@ -1617,12 +1630,45 @@ export class VideoPlayer
     })
   }
 
+  private adjustVolumeOrientation(): void {
+    if (!this.volumeControl || !this.controlsVisibility.showVolume) return;
+  
+    const panel = this.root.querySelector('.player__panel');
+    const panelBlocks = this.root.querySelectorAll('.player__panel-block');
+  
+    if (!panel || panelBlocks.length < 2) return;
+  
+    // The extra width required for the horizontal volume slider
+    const horizontalVolumeWidth = 110; // 100px for the slider + 10px margin
+  
+    // Calculate the total width of all visible elements in both blocks
+    let totalChildrenWidth = 0;
+    panelBlocks.forEach(block => {
+      Array.from(block.children).forEach(child => {
+        const style = window.getComputedStyle(child as Element);
+        if (style.display !== 'none') {
+          totalChildrenWidth += (child as HTMLElement).offsetWidth + parseInt(style.marginRight, 10);
+        }
+      });
+    });
+  
+    // Check if there's enough space for the horizontal volume slider
+    const availableWidth = panel.clientWidth - 30; // 30px for panel padding
+    const requiredWidth = totalChildrenWidth + horizontalVolumeWidth;
+  
+    if (requiredWidth > availableWidth) {
+      this.volumeControl.classList.add('player__volume--vertical');
+    } else {
+      this.volumeControl.classList.remove('player__volume--vertical');
+    }
+  }
+
   /**
    * Destroy the video player and clean up resources
    */
   destroy(): void
   {
-    window.removeEventListener('resize', this.adjustPanelsToViewport)
+    window.removeEventListener('resize', this.boundHandleResize)
 
     this.videoController.destroy()
     this.volumeController.destroy()

@@ -167,6 +167,15 @@
     }
   }
 
+  /* The Fix: Push time-display when hovering volume-control, but only in horizontal mode */
+  volume-control:not(.player__volume--vertical):hover + time-display {
+    margin-left: 110px; /* 100px for slider + 10px margin */
+  }
+
+  time-display {
+    transition: margin-left 0.2s ease;
+  }
+
   &__source-nav {
     position: absolute;
     top: 50%;

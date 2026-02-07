@@ -4,7 +4,9 @@
 }
 
 .player__panel-button {
+  position: relative; /* This is the anchor for the absolute positioned slider */
   display: flex;
+  align-items: center;
   outline: none;
   border: 0;
   font-size: 20px;
@@ -12,66 +14,76 @@
   color: inherit;
   padding: 0;
   background: none;
-  align-items: center;
   min-width: 26px;
+}
 
-  .fas {
-    min-width: 32px;
-  }
-
-  &:hover {
-    .player__volume {
-      width: 100px;
-      opacity: 1;
-      margin-left: 10px;
-    }
-  }
+.player__volume-icon {
+  min-width: 32px;
 }
 
 .player__volume {
   -webkit-appearance: none;
-  width: 0;
   height: 5px;
-  margin-left: 0;
   border-radius: 3px;
-  background-color: rgba(255, 255, 255, .2);
+  background-color: rgba(255, 255, 255, 0.2);
   outline: none;
-  opacity: 0;
-  transition: all .15s ease-in-out;
-  transition-property: width, opacity, margin-left;
   cursor: pointer;
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: all 0.15s ease-in-out;
-    transition-property: background-color, width, height;
-
-    &:hover {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  &::-moz-range-thumb {
-    border: 0;
-    width: 14px;
-    height: 14px;
-    background-color: #fff;
-    border-radius: 50%;
-    transition: all 0.15s ease-in-out;
-    transition-property: background-color, width, height;
-
-    &:hover {
-      width: 16px;
-      height: 16px;
-    }
-  }
+  opacity: 0;
+  width: 0;
+  transition: opacity 0.2s ease, width 0.2s ease;
+  position: absolute;
+  visibility: hidden; /* Use visibility to prevent interaction when hidden */
 }
 
-.player__volume-icon {
-  width: 20px;
+/* --- Horizontal Mode (Default) --- */
+:host(:not(.player__volume--vertical)) .player__volume {
+  left: 100%;
+  margin-left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* --- Vertical Mode --- */
+:host(.player__volume--vertical) .player__volume {
+  left: 50%;
+  bottom: calc(100% + 15px);
+  transform-origin: center;
+  transform: translateX(-50%) rotate(-90deg);
+}
+
+/* --- Visibility on Hover/Focus --- */
+.player__panel-button:hover .player__volume,
+.player__volume:focus {
+  opacity: 1;
+  visibility: visible;
+}
+
+:host(:not(.player__volume--vertical)) .player__panel-button:hover .player__volume,
+:host(:not(.player__volume--vertical)) .player__volume:focus {
+  width: 100px;
+}
+
+:host(.player__volume--vertical) .player__panel-button:hover .player__volume,
+:host(.player__volume--vertical) .player__volume:focus {
+  width: 80px;
+}
+
+
+/* --- Slider Thumb Styles --- */
+.player__volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: all 0.15s ease-in-out;
+}
+
+.player__volume::-moz-range-thumb {
+  border: 0;
+  width: 14px;
+  height: 14px;
+  background-color: #fff;
+  border-radius: 50%;
+  transition: all 0.15s ease-in-out;
 }
