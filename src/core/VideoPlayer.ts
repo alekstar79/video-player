@@ -1487,6 +1487,7 @@ export class VideoPlayer
 
       this.updatePlaylist()
       this.videoController.setPoster(newSource.thumb)
+      this.toggleNoFilesMessage(false)
 
       const newIndex = this.sources.findIndex(s => s.url === url)
       if (this.currentSourceIndex !== newIndex && newIndex !== -1) {
