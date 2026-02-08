@@ -210,6 +210,11 @@ export class VideoPlayer
       this.initInterfaceAutoHide()
     }
 
+    // Explicitly set initial state for play/pause button
+    if (!this.config.autoPlay) {
+      this.handlePause()
+    }
+
     // Defer the initial check to ensure the layout is stable
     await this.awaitLayout('.player__panel')
 
@@ -369,6 +374,8 @@ export class VideoPlayer
         }
 
         await this.videoController.play()
+      } else {
+        this.videoController.pause()
       }
 
       if (this.logging) {
@@ -1562,7 +1569,6 @@ export class VideoPlayer
     this.sourceTitleElement.classList.add('visible')
 
     clearTimeout(this.titleTimeout)
-
     this.titleTimeout = setTimeout(() => {
       this.sourceTitleElement.classList.remove('visible')
     }, 4000)
@@ -1626,7 +1632,6 @@ export class VideoPlayer
 
     if (!panel || panelBlocks.length < 2) return
 
-    // The extra width required for the horizontal volume slider
     // 100px for the slider + 10px margin
     const horizontalVolumeWidth = 110
 
@@ -1643,7 +1648,7 @@ export class VideoPlayer
     })
 
     // Check if there's enough space for the horizontal volume slider
-    const availableWidth = panel.clientWidth - 30 // 30px padding
+    const availableWidth = panel.clientWidth - 30 // padding
     const requiredWidth = totalChildrenWidth + horizontalVolumeWidth
 
     if (requiredWidth > availableWidth) {
