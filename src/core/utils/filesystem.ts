@@ -60,6 +60,23 @@ export class Filesystem
   }
 
   /**
+   * Wrapper for open() that uses a callback to avoid issues with async/await
+   * in user gesture handlers.
+   */
+  static openWithCallback(
+    callback: (result: File | File[] | null) => void,
+    accept: string = '*/*',
+    multiple: boolean = false
+  ): void {
+    this.open(accept, multiple)
+      .then(callback)
+      .catch(error => {
+        console.error('Error in file dialog:', error)
+        callback(null)
+      })
+  }
+
+  /**
    * Create object URL from file (replacement for URL.createObjectURL)
    */
   static createObjectURL(file: File | Blob): string
