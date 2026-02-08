@@ -49,8 +49,6 @@ export abstract class BaseComponent extends HTMLElement
 
   protected emit<T>(eventName: string, detail?: T): void
   {
-    this.dispatchEvent(
-      new CustomEvent(eventName, { bubbles: true, composed: true, detail })
-    )
+    this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true, detail }))
   }
 }

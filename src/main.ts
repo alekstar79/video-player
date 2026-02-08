@@ -10,10 +10,10 @@ const errorHandler = (error: Error | any) => {
   console.error('Failed to initialize video player:', error)
 
   document.body.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">
-<h2>Error Loading Video Player</h2>
-<p><strong>${error instanceof Error ? error.message : 'Unknown error'}</strong></p>
-<p>Please check the browser console for more details.</p>
-<p>Make sure you have a stable internet connection for loading icons and fonts.</p>
+  <h2>Error Loading Video Player</h2>
+  <p><strong>${error instanceof Error ? error.message : 'Unknown error'}</strong></p>
+  <p>Please check the browser console for more details.</p>
+  <p>Make sure you have a stable internet connection for loading icons and fonts.</p>
 </div>
 `
 }

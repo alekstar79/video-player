@@ -21,8 +21,8 @@ export default class PlaylistPanelComponent extends BaseComponent
   private offsetX = 0
   private offsetY = 0
 
-  private _sources: string[] = []
   private _activeIndex: number = -1
+  private _sources: string[] = []
 
   constructor()
   {
@@ -176,12 +176,11 @@ export default class PlaylistPanelComponent extends BaseComponent
 
   disconnectedCallback()
   {
+    this.listElement.removeEventListener('click', this.onItemClick)
+    this.closeButton.removeEventListener('click', this.onCloseClick)
     this.handleElement.removeEventListener('mousedown', this.onDragStart)
 
     document.removeEventListener('mousemove', this.onDragMove)
     document.removeEventListener('mouseup', this.onDragEnd)
-
-    this.listElement.removeEventListener('click', this.onItemClick)
-    this.closeButton.removeEventListener('click', this.onCloseClick)
   }
 }

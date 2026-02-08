@@ -27,11 +27,11 @@ export default class VideoPlayerComponent extends BaseComponent
   public autoPlay!: boolean
   public initialVolume!: number
   public playbackRate!: number
-  public showControls!: boolean
-  public logging!: boolean
-  public controlsVisibility!: Partial<ControlsVisibility>
+  public showControls: boolean = true
+  public controlsVisibility: Partial<ControlsVisibility> = {}
   public nextButton!: boolean
   public prevButton!: boolean
+  public logging!: boolean
 
   constructor()
   {
@@ -83,6 +83,28 @@ export default class VideoPlayerComponent extends BaseComponent
       (resolve) => {
         // Defer initialization to ensure all properties are set
         setTimeout(() => {
+          // Start with programmatically set properties as the base
+          const baseConfig: Partial<VideoPlayerConfig> = {
+            initialSources: this.initialSources,
+            maxWidth: this.maxWidth,
+            aspectRatio: this.aspectRatio,
+            loopMode: this.loopMode,
+            muted: this.muted,
+            autoPlay: this.autoPlay,
+            initialVolume: this.initialVolume,
+            playbackRate: this.playbackRate,
+            showControls: this.showControls,
+            nextButton: this.nextButton,
+            prevButton: this.prevButton,
+            logging: this.logging
+          }
+
+          const baseControlsVisibility = this.controlsVisibility || {}
+
+          // Parse attributes and create a config from them
+          const attrConfig: Partial<VideoPlayerConfig> = {}
+          const attrControlsVisibility: Partial<ControlsVisibility> = {}
+
           const attributeMap: AttributeMap = {
             // adjustment attributes
             'initial-sources': { configKey: 'initialSources', isControl: false },
@@ -111,34 +133,37 @@ export default class VideoPlayerComponent extends BaseComponent
             'show-timedisplay': { configKey: 'showTimeDisplay', isControl: true },
             'show-time-display': { configKey: 'showTimeDisplay', isControl: true }, // Alias
             'show-timeline': { configKey: 'showTimeline', isControl: true },
-            'show-volume': { configKey: 'showVolume', isControl: true },
+            'show-volume': { configKey: 'showVolume', isControl: true }
           }
 
-          const parsedConfig: Partial<VideoPlayerConfig> = {}
-          const controlsVisibility: Partial<ControlsVisibility> = {}
-
           for (const attr of this.attributes) {
-            const { name, value } = attr // name is always lowercase
+            const { name, value } = attr;
             const mapping = attributeMap[name]
 
             if (mapping) {
               const parsedValue = this.parseAttribute(name, value)
+
               if (mapping.isControl) {
-                (controlsVisibility as any)[mapping.configKey] = parsedValue
+                (attrControlsVisibility as any)[mapping.configKey] = parsedValue
               } else {
-                (parsedConfig as any)[mapping.configKey] = parsedValue
+                (attrConfig as any)[mapping.configKey] = parsedValue
               }
             }
           }
 
-          const config: VideoPlayerConfig = {
+          // Merge configs: attributes override programmatic properties
+          const finalConfig: VideoPlayerConfig = {
             container: this,
-            ...parsedConfig,
-            showControls: parsedConfig.showControls ?? true,
-            controlsVisibility
+            ...baseConfig,
+            ...attrConfig,
+            showControls: attrConfig.showControls ?? baseConfig.showControls ?? true,
+            controlsVisibility: {
+              ...baseControlsVisibility,
+              ...attrControlsVisibility
+            }
           }
 
-          this.playerInstance ??= new VideoPlayer(config, this.shadow)
+          this.playerInstance ??= new VideoPlayer(finalConfig, this.shadow)
 
           resolve(this.playerInstance)
         })

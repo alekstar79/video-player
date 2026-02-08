@@ -33,8 +33,6 @@ export function createPlayer(
 ): Promise<VideoPlayer> {
   registerComponents()
 
-  console.log(config)
-
   const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
 
   Object.assign(videoPlayer, defaultConfig, config)

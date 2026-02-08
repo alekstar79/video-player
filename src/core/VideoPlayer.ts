@@ -1555,12 +1555,14 @@ export class VideoPlayer
     if (!this.sourceTitleElement) return
 
     const currentSource = this.getCurrentSource()
+
     if (!currentSource || !currentSource.title) return
 
     this.sourceTitleElement.textContent = currentSource.title
     this.sourceTitleElement.classList.add('visible')
 
     clearTimeout(this.titleTimeout)
+
     this.titleTimeout = setTimeout(() => {
       this.sourceTitleElement.classList.remove('visible')
     }, 4000)
@@ -1593,6 +1595,7 @@ export class VideoPlayer
       if (panel.style.display === 'none' || !panel.style.left) return
 
       const panelRect = panel.getBoundingClientRect()
+
       let currentX = parseFloat(panel.style.left)
       let currentY = parseFloat(panel.style.top)
 
