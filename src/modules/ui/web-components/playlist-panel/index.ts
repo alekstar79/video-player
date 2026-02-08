@@ -1,4 +1,5 @@
 import { BaseComponent } from '../BaseComponent'
+
 import template from './template.html?raw'
 import style from './style.scss?inline'
 
@@ -75,6 +76,7 @@ export default class PlaylistPanelComponent extends BaseComponent
 
     this.listElement.addEventListener('click', this.onItemClick)
     this.closeButton.addEventListener('click', this.onCloseClick)
+
     this.handleElement.addEventListener('mousedown', this.onDragStart)
 
     document.addEventListener('mousemove', this.onDragMove)
@@ -178,6 +180,7 @@ export default class PlaylistPanelComponent extends BaseComponent
   {
     this.listElement.removeEventListener('click', this.onItemClick)
     this.closeButton.removeEventListener('click', this.onCloseClick)
+
     this.handleElement.removeEventListener('mousedown', this.onDragStart)
 
     document.removeEventListener('mousemove', this.onDragMove)
