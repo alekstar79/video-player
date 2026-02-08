@@ -1,24 +1,31 @@
-import { VideoPlayerComponent, registerComponents } from './modules/ui/web-components'
+import { registerComponents, createPlayer } from '.'
+
 import videos from '../videos'
 import './styles/main.scss'
+
+// Register web components (not required if created using createPlayer)
+registerComponents()
 
 const errorHandler = (error: Error | any) => {
   console.error('Failed to initialize video player:', error)
 
-  const appElement = document.getElementById('app')
-  if (appElement) {
-    appElement.innerHTML = `
-      <div style="color: red; text-align: center; padding: 20px;">
-        <h2>Error Loading Video Player</h2>
-        <p><strong>${error instanceof Error ? error.message : 'Unknown error'}</strong></p>
-        <p>Please check the browser console for more details.</p>
-        <p>Make sure you have a stable internet connection for loading icons and fonts.</p>
-      </div>`
-  }
+  document.body.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">
+<h2>Error Loading Video Player</h2>
+<p><strong>${error instanceof Error ? error.message : 'Unknown error'}</strong></p>
+<p>Please check the browser console for more details.</p>
+<p>Make sure you have a stable internet connection for loading icons and fonts.</p>
+</div>
+`
 }
 
-const getVideoUrl = (filename: string) => {
-  return new URL(`../public/${filename}`, import.meta.url).href
+const getContainer = (): HTMLElement => {
+  const container = document.getElementById('app')
+
+  if (!container) {
+    throw new Error('App container element not found')
+  }
+
+  return container
 }
 
 /**
@@ -27,51 +34,16 @@ const getVideoUrl = (filename: string) => {
  */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const appElement = document.getElementById('app')
-    if (!appElement) {
-      errorHandler(new Error('App container element not found'))
-      return
-    }
+    const container = getContainer()
 
-    // Register all web components
-    registerComponents()
+    container.innerHTML = ''
 
-    appElement.innerHTML = ''
+    // Create video-player instance
+    const player = await createPlayer(container, {
+      // initialSources: videos
+    })
 
-    // Create video-player component
-    const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
-
-    // Set configuration
-    videoPlayer.initialSources = [
-      getVideoUrl('Synthwave.mp4'),
-      getVideoUrl('GalaxyNebula.mp4'),
-      ...videos
-    ]
-    videoPlayer.maxWidth = '960px'
-    videoPlayer.aspectRatio = '16:9'
-    videoPlayer.loopMode = 'all'
-    videoPlayer.muted = true
-    videoPlayer.autoPlay = false
-    videoPlayer.initialVolume = 0.7
-    videoPlayer.playbackRate = 1.0
-    videoPlayer.showControls = true
-    videoPlayer.logging = false
-    videoPlayer.controlsVisibility = {
-      showOpenFile: true,
-      showPlayPause: true,
-      showSkipButtons: true,
-      showVolume: true,
-      showTimeDisplay: true,
-      showSpeed: true,
-      showPip: true,
-      showFullscreen: true,
-      showLoop: true,
-      showTimeline: true
-    }
-
-    appElement.appendChild(videoPlayer)
-
-    const player = await videoPlayer.whenReady()
+    player.setSources(videos)
 
     player.on('loopmodechanged', (mode) => {
       if (player.logging) {

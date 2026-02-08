@@ -18,17 +18,16 @@ export interface ControlsVisibility {
 }
 
 export interface VideoPlayerConfig {
+  initialSources?: (string | Partial<VideoSource>)[];
   container: HTMLElement;
   autoPlay?: boolean;
   initialVolume?: number;
   playbackRate?: number;
   logging?: boolean;
   loopMode?: LoopMode;
-  loop?: boolean;
   muted?: boolean;
   showControls: boolean;
   controlsVisibility?: ControlsVisibility;
-  initialSources?: (string | Partial<VideoSource>)[];
   maxWidth?: string | number; // '100%', 1200, '1200px'
   width?: string | number;    // '100%', 800, '800px'
   height?: string | number;   // '100%', 450, '450px'

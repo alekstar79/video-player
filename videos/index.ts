@@ -1,4 +1,10 @@
+export const getVideoUrl = (filename: string) => {
+  return new URL(`../public/${filename}`, import.meta.url).href
+}
+
 export default [
+  getVideoUrl('Synthwave.mp4'),
+  getVideoUrl('GalaxyNebula.mp4'),
   {
     description: 'Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain\'t no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.\n\nLicensed under the Creative Commons Attribution license\nhttps://www.bigbuckbunny.org',
     source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -21,7 +27,7 @@ export default [
     description: 'Introducing Chromecast. The easiest way to enjoy online video and music on your TV—for when Batman\'s escapes aren\'t quite big enough. For $35. Learn how to use Chromecast with Google Play Movies and more at google.com/chromecast.',
     source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     thumb: 'posters/ForBiggerEscapes.jpg',
-    title: 'For Bigger Escape'
+    title: 'For Bigger Escapes'
   },
   {
     description: 'Introducing Chromecast. The easiest way to enjoy online video and music on your TV. For $35.  Find out more at google.com/chromecast.',

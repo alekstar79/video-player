@@ -14,7 +14,14 @@ import TimelineComponent from './timeline'
 import VolumeControlComponent from './volume-control'
 import VideoPlayerComponent from './video-player'
 
-export function registerComponents() {
+let isRegistered = false
+
+export function registerComponents()
+{
+  if (isRegistered) return
+
+  isRegistered = true
+
   customElements.define('fullscreen-button', FullscreenButtonComponent)
   customElements.define('loop-button', LoopButtonComponent)
   customElements.define('open-file-button', OpenFileButtonComponent)
@@ -32,7 +39,8 @@ export function registerComponents() {
   customElements.define('video-player', VideoPlayerComponent)
 }
 
-export function whenDefined(): Promise<CustomElementConstructor[]> {
+export function whenDefined(): Promise<CustomElementConstructor[]>
+{
   return Promise.all([
     customElements.whenDefined('fullscreen-button'),
     customElements.whenDefined('loop-button'),

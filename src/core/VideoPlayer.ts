@@ -1,11 +1,11 @@
 import type { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig, VideoSource, ZIndexInterface } from '@/types'
 
-import { EventEmitter } from '@/core/events/EventEmitter'
-import { FullscreenController } from '@/modules/controls/FullscreenController'
-import { PlaybackController } from '@/modules/controls/PlaybackController'
-import { TimelineController } from '@/modules/controls/TimelineController'
-import { VideoController } from '@/modules/controls/VideoController'
-import { VolumeController } from '@/modules/controls/VolumeController'
+import { EventEmitter } from '@/core/events/EventEmitter.ts'
+import { FullscreenController } from '@/modules/controls/FullscreenController.ts'
+import { PlaybackController } from '@/modules/controls/PlaybackController.ts'
+import { TimelineController } from '@/modules/controls/TimelineController.ts'
+import { VideoController } from '@/modules/controls/VideoController.ts'
+import { VolumeController } from '@/modules/controls/VolumeController.ts'
 import { Helpers, zIndex } from '@/core/utils'
 import { getMetadata } from '@/core/metadata'
 
@@ -57,15 +57,14 @@ export class VideoPlayer
   private playlistPanel!: PlaylistPanelComponent
   private previewButton!: PreviewButtonComponent
   private previewPanel!: PreviewPanelComponent
-  private noFilesMessage!: HTMLElement
-  private sourceTitleElement!: HTMLElement
   private volumeControl!: VolumeControlComponent
+  private sourceTitleElement!: HTMLElement
+  private noFilesMessage!: HTMLElement
 
   // Z-Index & Resize
   private zIndex: ZIndexInterface
   private draggablePanels: HTMLElement[] = []
   private readonly resizeHandlers: Map<string, () => void> = new Map()
-  private boundHandleResize!: () => void
 
   // State
   private sources: VideoSource[] = []
@@ -169,7 +168,7 @@ export class VideoPlayer
 
     // Initialize controllers
     this.initializeControllers()
-    this.initializeEventListeners()
+    this.initializePiPListeners()
 
     // Apply Visibility settings
     this.applyIndividualControlsVisibility()
@@ -195,12 +194,12 @@ export class VideoPlayer
     }
 
     // Defer the initial check to ensure the layout is stable
-    await this.waitForLayout('.player__panel')
+    await this.awaitLayout('.player__panel')
 
     this.handleResize()
   }
 
-  private waitForLayout(selector: string, timeout: number = 1000): Promise<void>
+  private awaitLayout(selector: string, timeout: number = 990): Promise<void>
   {
     return new Promise(resolve => {
       let el: HTMLElement | null
@@ -209,13 +208,13 @@ export class VideoPlayer
         el ??= this.root.querySelector(selector)
 
         if (!el || el.offsetWidth <= 0) {
-          requestAnimationFrame(checkDimensions)
+          requestIdleCallback(checkDimensions)
         } else {
           setTimeout(resolve, timeout)
         }
       }
 
-      checkDimensions()
+      requestIdleCallback(checkDimensions)
     })
   }
 
@@ -573,11 +572,9 @@ export class VideoPlayer
     this.volumeController.setVolume(initialVolume)
     this.volumeController.updateIcon(initialVolume, isMuted)
 
-
     if (this.config.playbackRate !== undefined) {
       this.videoController.setPlaybackRate(this.config.playbackRate)
     }
-
 
     this.applyLoopMode()
     this.updateLoopButton()
@@ -624,72 +621,67 @@ export class VideoPlayer
    */
   private bindEventListeners(): void
   {
-    this.boundHandleResize = this.handleResize.bind(this)
-    window.addEventListener('resize', this.boundHandleResize)
+    this.adjustPanelsToViewport = this.adjustPanelsToViewport.bind(this)
+    this.adjustVolumeOrientation = this.adjustVolumeOrientation.bind(this)
+    this.handleResize = this.handleResize.bind(this)
 
-    this.resizeHandlers.set('adjustPanelsToViewport', this.adjustPanelsToViewport.bind(this))
-    this.resizeHandlers.set('adjustVolumeOrientation', this.adjustVolumeOrientation.bind(this))
+    this.resizeHandlers.set('adjustPanelsToViewport', this.adjustPanelsToViewport)
+    this.resizeHandlers.set('adjustVolumeOrientation', this.adjustVolumeOrientation)
+
+    window.addEventListener('resize', this.handleResize)
 
     // Open File button
-    const openFileButton = this.root.querySelector<HTMLElement>('.j-open-file')
-    if (openFileButton) {
-      openFileButton.addEventListener('click', async () => {
+    this.root.querySelector<HTMLElement>('.j-open-file')
+      ?.addEventListener('click', async () => {
         this.resetInterfaceTimeout()
         await this.loadVideoFile()
       })
-    }
 
     // Play/Pause button
-    if (this.playPauseButton) {
-      this.playPauseButton.addEventListener('click', async () => {
-        this.resetInterfaceTimeout()
-        if (!this.videoController.getIsPlaying()) {
-          this.showSourceTitle()
-        }
-        await this.videoController.togglePlay()
-      })
-    }
+    this.playPauseButton?.addEventListener('click', async () => {
+      this.resetInterfaceTimeout()
 
-    // Skip buttons
-    this.root.querySelectorAll<SkipButtonComponent>('skip-button').forEach(button => {
-      button.addEventListener('click', () => {
-        this.resetInterfaceTimeout()
-        const direction = button.getAttribute('direction') === 'forward' ? 5 : -5
-        this.videoController.skip(direction)
-      })
+      if (!this.videoController.getIsPlaying()) {
+        this.showSourceTitle()
+      }
+
+      await this.videoController.togglePlay()
     })
 
-    // Loop button
-    if (this.loopButton) {
-      this.loopButton.addEventListener('click', () => {
-        this.resetInterfaceTimeout()
-        this.toggleLoop()
+    // Skip buttons
+    this.root.querySelectorAll<SkipButtonComponent>('skip-button')
+      .forEach(button => {
+        button.addEventListener('click', () => {
+          this.resetInterfaceTimeout()
+          this.videoController.skip(button.getAttribute('direction') === 'forward' ? 5 : -5)
+        })
       })
-    }
+
+    // Loop button
+    this.loopButton?.addEventListener('click', () => {
+      this.resetInterfaceTimeout()
+      this.toggleLoop()
+    })
 
     // Video click to play/pause and open file dialog if no source
     const videoElement = this.root.querySelector<HTMLElement>('.player__video')
-    if (videoElement) {
-      videoElement.addEventListener('click', async () => {
-        if (!this.videoController.getIsPlaying()) {
-          this.showSourceTitle()
-        }
+    videoElement?.addEventListener('click', async () => {
+      if (!this.videoController.getIsPlaying()) {
+        this.showSourceTitle()
+      }
 
-        await this.videoController.togglePlay()
-      })
+      await this.videoController.togglePlay()
+    })
 
-      videoElement.addEventListener('dblclick', async () => {
-        await this.toggleFullscreen()
-      })
-    }
+    videoElement?.addEventListener('dblclick', async () => {
+      await this.toggleFullscreen()
+    })
 
     // Fullscreen button
-    if (this.fullscreenButton) {
-      this.fullscreenButton.addEventListener('click', async () => {
-        this.resetInterfaceTimeout()
-        await this.toggleFullscreen()
-      })
-    }
+    this.fullscreenButton?.addEventListener('click', async () => {
+      this.resetInterfaceTimeout()
+      await this.toggleFullscreen()
+    })
 
     // Picture in Picture button
     if (this.pipButton) {
@@ -704,76 +696,66 @@ export class VideoPlayer
     }
 
     // Playlist button
-    if (this.playlistButton) {
-      this.playlistButton.addEventListener('click', () => {
-        this.resetInterfaceTimeout()
-        this.togglePlaylist()
-      })
-    }
+    this.playlistButton?.addEventListener('click', () => {
+      this.resetInterfaceTimeout()
+      this.togglePlaylist()
+    })
 
     // Playlist panel
-    if (this.playlistPanel) {
-      this.playlistPanel.addEventListener('itemclick', async (e: any) => {
-        this.resetInterfaceTimeout()
-        await this.switchToSource(e.detail.index)
-      })
+    this.playlistPanel?.addEventListener('itemclick', async (e: any) => {
+      this.resetInterfaceTimeout()
+      await this.switchToSource(e.detail.index)
+    })
 
-      this.playlistPanel.addEventListener('close', () => this.togglePlaylist())
-    }
+    this.playlistPanel?.addEventListener('close', () => {
+      this.togglePlaylist()
+    })
 
     // Preview button
-    if (this.previewButton) {
-      this.previewButton.addEventListener('click', async () => {
-        this.resetInterfaceTimeout()
-        await this.togglePreviewPanel()
-      })
-    }
+    this.previewButton?.addEventListener('click', async () => {
+      this.resetInterfaceTimeout()
+      await this.togglePreviewPanel()
+    })
 
     // Preview panel
-    if (this.previewPanel) {
-      this.previewPanel.addEventListener('generate', async () => {
-        this.resetInterfaceTimeout()
-        await this.generateAndShowPreview()
-      })
+    this.previewPanel?.addEventListener('generate', async () => {
+      this.resetInterfaceTimeout()
+      await this.generateAndShowPreview()
+    })
 
-      this.previewPanel.addEventListener('close', async () => {
-        await this.togglePreviewPanel()
-      })
-    }
+    this.previewPanel?.addEventListener('close', async () => {
+      await this.togglePreviewPanel()
+    })
 
     // Source Navigation buttons
-    this.sourcePrevButton
-      ?.addEventListener('click', (e) => {
-        this.resetInterfaceTimeout()
-        e.stopPropagation()
-        this.previousSource().catch(console.error)
-      })
+    this.sourcePrevButton?.addEventListener('click', (e) => {
+      this.resetInterfaceTimeout()
+      e.stopPropagation()
+      this.previousSource().catch(console.error)
+    })
 
-    this.sourceNextButton
-      ?.addEventListener('click', (e) => {
-        this.resetInterfaceTimeout()
-        e.stopPropagation()
-        this.nextSource().catch(console.error)
-      })
+    this.sourceNextButton?.addEventListener('click', (e) => {
+      this.resetInterfaceTimeout()
+      e.stopPropagation()
+      this.nextSource().catch(console.error)
+    })
 
     // Update playlist on source change
     this.on('sourcechanged', () => this.updatePlaylist())
 
     // Listen for mouse over on control elements
-    const controlElements = this.root.querySelectorAll<HTMLElement>(
-      '.player__panel, .player__top-panel, .player__source-nav'
-    )
+    this.root.querySelectorAll<HTMLElement>('.player__panel, .player__top-panel, .player__source-nav')
+      ?.forEach(element => {
+        element.addEventListener('mouseenter', () => {
+          this.isMouseOverControls = true
+          this.resetInterfaceTimeout()
+        })
 
-    controlElements.forEach(element => {
-      element.addEventListener('mouseenter', () => {
-        this.isMouseOverControls = true
-        this.resetInterfaceTimeout()
+        element.addEventListener('mouseleave', () => {
+          this.isMouseOverControls = false
+          this.resetInterfaceTimeout()
+        })
       })
-      element.addEventListener('mouseleave', () => {
-        this.isMouseOverControls = false
-        this.resetInterfaceTimeout()
-      })
-    })
   }
 
   /**
@@ -818,7 +800,7 @@ export class VideoPlayer
     })
   }
 
-  private initializeEventListeners(): void
+  private initializePiPListeners(): void
   {
     const video = this.root.querySelector<HTMLElement>('.player__video')
 
@@ -854,12 +836,15 @@ export class VideoPlayer
    */
   private initInterfaceAutoHide(): void
   {
-    this.playerElement.addEventListener('mousemove', () => this.resetInterfaceTimeout())
+    this.playerElement.addEventListener('mousemove', () => {
+      this.resetInterfaceTimeout()
+    })
   }
 
   // Event Handlers
 
-  private handleResize(): void {
+  private handleResize(): void
+  {
     this.resizeHandlers.forEach(handler => handler())
   }
 
@@ -1063,7 +1048,7 @@ export class VideoPlayer
   /**
    * Set video sources array
    */
-  setSources(sources: (string | Partial<VideoSource>)[]): void
+  setSources(sources: (string | Partial<VideoSource>)[] = []): void
   {
     this.sources = this.normalizeSources(sources)
     this.currentSourceIndex = 0
@@ -1363,7 +1348,7 @@ export class VideoPlayer
    */
   getLoop(): boolean
   {
-    return this.loopMode === 'one'
+    return ['one', 'all'].includes(this.loopMode)
   }
 
   /**
@@ -1652,7 +1637,8 @@ export class VideoPlayer
     })
   }
 
-  private adjustVolumeOrientation(): void {
+  private adjustVolumeOrientation(): void
+  {
     if (!this.volumeControl || !this.controlsVisibility.showVolume) return
 
     const panel = this.root.querySelector('.player__panel')
@@ -1661,7 +1647,8 @@ export class VideoPlayer
     if (!panel || panelBlocks.length < 2) return
 
     // The extra width required for the horizontal volume slider
-    const horizontalVolumeWidth = 110 // 100px for the slider + 10px margin
+    // 100px for the slider + 10px margin
+    const horizontalVolumeWidth = 110
 
     // Calculate the total width of all visible elements in both blocks
     let totalChildrenWidth = 0
@@ -1691,7 +1678,7 @@ export class VideoPlayer
    */
   destroy(): void
   {
-    window.removeEventListener('resize', this.boundHandleResize)
+    window.removeEventListener('resize', this.handleResize)
 
     this.videoController.destroy()
     this.volumeController.destroy()

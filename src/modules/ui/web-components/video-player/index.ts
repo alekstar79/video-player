@@ -1,7 +1,7 @@
 import type { ControlsVisibility, LoopMode, VideoSource } from '@/types'
 
 import { BaseComponent } from '../BaseComponent'
-import { VideoPlayer } from '@/app/VideoPlayer'
+import { VideoPlayer } from '@/core/VideoPlayer'
 
 import template from './template.html?raw'
 import styles from './style.scss?inline'
