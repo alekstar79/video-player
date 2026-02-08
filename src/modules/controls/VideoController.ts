@@ -11,6 +11,7 @@ export class VideoController implements VideoControls
 
   private eventHandlers: VideoEventHandlers & { onFileLoaded?: (file: File, url: string) => void }
   private createdBlobUrls: string[] = []
+  private isFilePickerOpen: boolean = false
   private isPlaying: boolean = false
   private hasSource: boolean = false
 
@@ -244,11 +245,19 @@ export class VideoController implements VideoControls
   /**
    * Open file dialog and load selected video file
    */
-  async loadVideoFile(): Promise<void> {
-    try {
-      const file = await Filesystem.open('video/*') as File
+  async loadVideoFile(): Promise<void>
+  {
+    if (this.isFilePickerOpen) return
 
-      if (file) {
+    this.isFilePickerOpen = true
+
+    try {
+      const result = Filesystem.isPickerSupported()
+        ? await Filesystem.selectFileWithPicker('video/*')
+        : await Filesystem.open('video/*')
+
+      if (result && !Array.isArray(result)) {
+        const file = result as File
         const url = await this.setVideoSource(file)
 
         if (this.eventHandlers.onFileLoaded) {
@@ -256,8 +265,10 @@ export class VideoController implements VideoControls
         }
       }
     } catch (error) {
+      // We don't re-throw the error to prevent unhandled promise rejections
       console.error('Error loading video file:', error)
-      throw error
+    } finally {
+      this.isFilePickerOpen = false
     }
   }
 

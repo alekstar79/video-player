@@ -643,7 +643,8 @@ export class VideoPlayer
 
     // Open File button
     this.root.querySelector<HTMLElement>('.j-open-file')
-      ?.addEventListener('click', async () => {
+      ?.addEventListener('click', async (event) => {
+        event.stopPropagation();
         this.resetInterfaceTimeout()
         await this.loadVideoFile()
       })

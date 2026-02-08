@@ -1,3 +1,20 @@
+interface AcceptableTypes {
+  description?: string;
+  accept: {
+    [key: string]: string[]
+  };
+}
+
+interface FilePickerOptions {
+  id?: string;
+  excludeAcceptAllOption?: boolean;
+  multiple?: boolean;
+  startIn?: FileSystemHandle;
+  types?: AcceptableTypes[];
+}
+
+declare function showOpenFilePicker(options: FilePickerOptions): Promise<FileSystemFileHandle[]>;
+
 /**
  * Utility for opening file dialog - replacement for old utils.js open function
  */
@@ -5,6 +22,14 @@ export class Filesystem
 {
   static BINARY = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
   static DECIMAL = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+  /**
+   * Checks if the modern File System Access API is supported.
+   */
+  static isPickerSupported(): boolean
+  {
+    return typeof showOpenFilePicker === 'function'
+  }
 
   static createInput({ accept, multiple }: { accept: string; multiple: boolean })
   {
@@ -22,40 +47,63 @@ export class Filesystem
     return input
   }
 
+  static dispatch(el: HTMLElement, eventName: string)
+  {
+    el.dispatchEvent(new MouseEvent(eventName, { bubbles: false, cancelable: true }))
+  }
+
   static cleanup(input: HTMLElement)
   {
-    document.body.removeChild(input)
+    if (input.parentNode) {
+      input.parentNode.removeChild(input)
+    }
   }
 
   /**
    * Open file dialog and return selected file
    */
-  static async open(accept: string = '*/*', multiple: boolean = false): Promise<File | File[] | null>
-  {
+  static async open(
+    accept: string = 'video/*',
+    multiple: boolean = false
+  ): Promise<File | File[] | null> {
     return new Promise((resolve) => {
       const input = Filesystem.createInput({ accept, multiple })
 
-      input.addEventListener('change', () => {
+      const cleanup = () => {
+        Filesystem.cleanup(input)
+        window.removeEventListener('focus', onFocus)
+      }
+
+      const onChange = () => {
         if (input.files && input.files.length > 0) {
-          if (multiple) {
-            resolve(Array.from(input.files))
-          } else {
-            resolve(input.files[0])
-          }
+          resolve(multiple ? Array.from(input.files) : input.files[0])
         } else {
           resolve(null)
         }
 
-        Filesystem.cleanup(input)
-      })
+        cleanup()
+      }
 
-      input.addEventListener('cancel', () => {
+      const onCancel = () => {
         resolve(null)
-        Filesystem.cleanup(input)
-      })
+        cleanup()
+      }
+
+      const onFocus = () => {
+        setTimeout(() => {
+          if (!input.files || input.files.length === 0) {
+            onCancel()
+          }
+        }, 300)
+      }
+
+      window.addEventListener('focus', onFocus, { once: true })
+      input.addEventListener('change', onChange)
+      input.addEventListener('cancel', onCancel)
 
       document.body.appendChild(input)
-      input.click()
+
+      Filesystem.dispatch(input, 'click')
     })
   }
 
@@ -65,7 +113,7 @@ export class Filesystem
    */
   static openWithCallback(
     callback: (result: File | File[] | null) => void,
-    accept: string = '*/*',
+    accept: string = 'video/*',
     multiple: boolean = false
   ): void {
     this.open(accept, multiple)
@@ -74,6 +122,35 @@ export class Filesystem
         console.error('Error in file dialog:', error)
         callback(null)
       })
+  }
+
+  /**
+   * Opens a file picker using the modern File System Access API.
+   */
+  static async selectFileWithPicker(
+    accept: string = 'video/*',
+    multiple: boolean = false
+  ): Promise<File | File[] | null> {
+    const options: FilePickerOptions = {
+      types: [{
+        description: 'Video Files',
+        accept: { [accept]: ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m4v'] }
+      }],
+      multiple
+    }
+
+    try {
+      const mapper = (handle: FileSystemFileHandle) => handle.getFile()
+      const handles = await showOpenFilePicker?.(options)
+
+      return multiple ? Promise.all(handles.map(mapper)) : handles[0].getFile()
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return null
+      }
+
+      throw error
+    }
   }
 
   /**
@@ -145,9 +222,10 @@ export class Filesystem
 
     a.download = filename
     a.href = Filesystem.createObjectURL(blob)
-    document.body.appendChild(a)
-    a.click()
 
+    document.body.appendChild(a)
+
+    Filesystem.dispatch(a, 'click')
     Filesystem.revokeObjectURL(a.href)
     Filesystem.cleanup(a)
   }
