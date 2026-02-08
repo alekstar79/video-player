@@ -80,7 +80,7 @@ export default [
   {
     description: 'The Smoking Tire meets up with Chris and Jorge from CarsForAGrand.com to see just how far $1,000 can go when looking for a car.The Smoking Tire meets up with Chris and Jorge from CarsForAGrand.com to see just how far $1,000 can go when looking for a car.',
     source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
-    thumb: 'posters/WhatCarCanYouGetForAGrand.jpg',
+    thumb: 'posters/WhatCareCanYouGetForAGrand.jpg',
     title: 'What care can you get for a grand?'
   }
 ]
