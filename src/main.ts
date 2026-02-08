@@ -39,11 +39,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = ''
 
     // Create video-player instance
-    const player = await createPlayer(container, {
-      // initialSources: videos
-    })
+    const player = await createPlayer(container, { initialSources: videos })
 
-    player.setSources(videos)
+    // player.setSources(videos)
 
     player.on('loopmodechanged', (mode) => {
       if (player.logging) {
@@ -54,7 +52,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (player.logging) {
       console.log('Video Player initialized successfully')
     }
-
   } catch (error) {
     errorHandler(error as Error)
   }

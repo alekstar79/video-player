@@ -86,8 +86,14 @@ export class VideoPlayer
     this.container = config.container
     this.root = root
 
+    // isShowControls is the DYNAMIC state for the auto-hide feature.
+    // It should not be confused with the initial config setting.
+    this.isShowControls = true
+
     // Correctly parse boolean values from config
-    this.isShowControls = Helpers.parseBoolean(config.showControls ?? true)
+    this.config.nextButton = Helpers.parseBoolean(config.nextButton ?? true)
+    this.config.prevButton = Helpers.parseBoolean(config.prevButton ?? true)
+    this.config.showControls = Helpers.parseBoolean(config.showControls ?? true)
     this.config.autoPlay = Helpers.parseBoolean(config.autoPlay ?? false)
     this.config.muted = Helpers.parseBoolean(config.muted ?? false)
     this.logging = Helpers.parseBoolean(config.logging ?? false)
@@ -160,6 +166,17 @@ export class VideoPlayer
       throw new Error('Player element not found after rendering template')
     }
 
+    // If controls are disabled by config, hide the UI panels but leave the cursor alone.
+    if (!this.config.showControls) {
+      ['.player__panel', '.player__top-panel', '.player__main-icon']
+        .forEach(selector => {
+          this.root.querySelectorAll<HTMLElement>(selector)
+            .forEach(element => {
+              element.style.display = 'none'
+            })
+        })
+    }
+
     this.noFilesMessage = this.root.querySelector('.player__no-files-message')!
     this.sourceTitleElement = this.root.querySelector('.player__source-title')!
 
@@ -188,8 +205,8 @@ export class VideoPlayer
       this.toggleNoFilesMessage(true)
     }
 
-    // Initialize auto-hide only if controls are visible
-    if (this.isShowControls) {
+    // Initialize auto-hide only if controls are enabled in the config
+    if (this.config.showControls) {
       this.initInterfaceAutoHide()
     }
 
@@ -304,7 +321,7 @@ export class VideoPlayer
 
   private applyIndividualControlsVisibility(): void
   {
-    if (!this.showControls) return
+    if (!this.config.showControls) return
 
     Object.entries({
       showOpenFile: '.j-open-file',
@@ -318,10 +335,8 @@ export class VideoPlayer
       showLoop: 'loop-button',
       showTimeline: 'timeline-control'
     }).forEach(([key, selector]) => {
-      const elements = this.root.querySelectorAll<HTMLElement>(selector)
       const isVisible = this.controlsVisibility[key as keyof ControlsVisibility]
-
-      elements.forEach(element => {
+      this.root.querySelectorAll<HTMLElement>(selector).forEach(element => {
         element.style.display = isVisible ? '' : 'none'
       })
     })
@@ -352,6 +367,7 @@ export class VideoPlayer
         if (!this.config.muted) {
            if (this.logging) console.warn('Autoplay may not work without the player being muted.')
         }
+
         await this.videoController.play()
       }
 
@@ -379,9 +395,7 @@ export class VideoPlayer
   public async tryNextSource(): Promise<void>
   {
     const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
-
     if (nextIndex === 0) {
-      // If all sources are exhausted, throw an error
       this.events.emit('error', new Error('All video sources failed to load'))
       return
     }
@@ -448,14 +462,13 @@ export class VideoPlayer
    */
   private hideAllControls(): void
   {
-    const controlElements = ['.player__panel', '.player__top-panel', '.player__main-icon']
-
-    controlElements.forEach(selector => {
-      this.root.querySelectorAll<HTMLElement>(selector)
-        .forEach(element => {
-          element.style.display = 'none'
-        })
-    })
+    ['.player__panel', '.player__top-panel', '.player__main-icon']
+      .forEach(selector => {
+        this.root.querySelectorAll<HTMLElement>(selector)
+          .forEach(element => {
+            element.style.display = 'none'
+          })
+      })
 
     // Also hide cursor for video element
     const videoElement = this.root.querySelector<HTMLElement>('.player__video')
@@ -469,14 +482,13 @@ export class VideoPlayer
    */
   private showAllControls(): void
   {
-    const controlElements = ['.player__panel', '.player__top-panel', '.player__main-icon']
-
-    controlElements.forEach(selector => {
-      this.root.querySelectorAll<HTMLElement>(selector)
-        .forEach(element => {
-          element.style.display = ''
-        })
-    })
+    ['.player__panel', '.player__top-panel', '.player__main-icon']
+      .forEach(selector => {
+        this.root.querySelectorAll<HTMLElement>(selector)
+          .forEach(element => {
+            element.style.display = ''
+          })
+      })
 
     // Restore cursor for video element
     const videoElement = this.root.querySelector<HTMLElement>('.player__video')
@@ -600,11 +612,10 @@ export class VideoPlayer
    */
   private checkPictureInPictureSupport(): { supported: boolean; reason?: string }
   {
-    if (!('pictureInPictureEnabled' in this.root)) {
+    if (!('pictureInPictureEnabled' in document)) {
       return { supported: false, reason: 'API not available' }
     }
-
-    if (!(this.root as Document).pictureInPictureEnabled) {
+    if (!document.pictureInPictureEnabled) {
       return { supported: false, reason: 'PiP disabled by browser or policy' }
     }
 
@@ -686,9 +697,13 @@ export class VideoPlayer
     // Picture in Picture button
     if (this.pipButton) {
       if (this.isPictureInPictureSupported()) {
-        this.pipButton.addEventListener('click', async () => {
+        this.pipButton.addEventListener('click', () => {
           this.resetInterfaceTimeout()
-          await this.togglePictureInPicture()
+          this.togglePictureInPicture().catch(err => {
+            if (err.name !== 'NotAllowedError') {
+              console.error(err)
+            }
+          })
         })
       } else {
         this.pipButton.style.display = 'none'
@@ -818,7 +833,10 @@ export class VideoPlayer
     this.playerElement.classList.remove('player--pip-active')
   }
 
-  private resetInterfaceTimeout(): void {
+  private resetInterfaceTimeout(): void
+  {
+    if (!this.config.showControls) return
+
     this.showInterface()
     clearTimeout(this.interfaceTimeout)
 
@@ -851,13 +869,14 @@ export class VideoPlayer
   private updateSourceNavigationVisibility(): void
   {
     const hasMultipleSources = this.sources.length > 1
+    const showPrev = hasMultipleSources && (this.config.prevButton ?? true)
+    const showNext = hasMultipleSources && (this.config.nextButton ?? true)
 
     if (this.sourcePrevButton) {
-      this.sourcePrevButton.style.display = hasMultipleSources ? '' : 'none'
+      this.sourcePrevButton.style.display = showPrev ? '' : 'none'
     }
-
     if (this.sourceNextButton) {
-      this.sourceNextButton.style.display = hasMultipleSources ? '' : 'none'
+      this.sourceNextButton.style.display = showNext ? '' : 'none'
     }
   }
 
@@ -924,6 +943,7 @@ export class VideoPlayer
   {
     if (this.loopMode === 'all') {
       if (this.sources.length <= 1) return
+
       const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
       this.loadSourceByIndex(nextIndex, true).catch(error => {
         console.error('Failed to play next source:', error)
@@ -959,7 +979,6 @@ export class VideoPlayer
     }
 
     this.playerElement.classList.toggle('player--fullscreen', isFullscreen)
-
     this.adjustSourceNavigationPosition()
     this.handleResize()
 
@@ -1209,7 +1228,7 @@ export class VideoPlayer
    */
   private isPictureInPictureSupported(): boolean
   {
-    return 'pictureInPictureEnabled' in this.root && (this.root as Document).pictureInPictureEnabled !== undefined
+    return 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled !== undefined
   }
 
   /**
@@ -1223,58 +1242,10 @@ export class VideoPlayer
       return
     }
 
-    try {
-      if ((this.root as Document).pictureInPictureElement) {
-        await (this.root as Document).exitPictureInPicture()
-      } else if ((this.root as Document).pictureInPictureEnabled) {
-        if (navigator.userAgent.toLowerCase().includes('firefox')) {
-          await this.enterPictureInPictureFirefox(video)
-        } else {
-          await video.requestPictureInPicture()
-        }
-      }
-    } catch (error) {
-      console.error('Picture in Picture error:', error)
-    }
-  }
-
-  /**
-   * Special method for Firefox PiP implementation
-   */
-  private async enterPictureInPictureFirefox(video: HTMLVideoElement): Promise<void>
-  {
-    if (video.paused) {
-      try {
-        await video.play()
-      } catch (playError) {
-        console.warn('Cannot play video for PiP in Firefox:', playError)
-      }
-    }
-
-    try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture()
+    } else if (document.pictureInPictureEnabled) {
       await video.requestPictureInPicture()
-    } catch (pipError) {
-      console.error('Firefox PiP failed:', pipError)
-      await this.fallbackPictureInPicture(video)
-    }
-  }
-
-  /**
-   * Fallback method for PiP when standard approach fails
-   */
-  private async fallbackPictureInPicture(video: HTMLVideoElement): Promise<void>
-  {
-    video.dispatchEvent(
-      new MouseEvent('click', { bubbles: true, cancelable: true, view: window })
-    )
-
-    await new Promise(resolve => setTimeout(resolve, 100))
-
-    try {
-      await video.requestPictureInPicture()
-    } catch (error) {
-      console.error('Fallback PiP also failed:', error)
-      throw new Error('Picture-in-Picture is not available in this browser')
     }
   }
 
@@ -1283,6 +1254,8 @@ export class VideoPlayer
    */
   showControls(): void
   {
+    if (!this.config.showControls) return
+
     this.isShowControls = true
     this.showAllControls()
     this.applyIndividualControlsVisibility()
@@ -1294,6 +1267,8 @@ export class VideoPlayer
    */
   hideControls(): void
   {
+    if (!this.config.showControls) return
+
     this.isShowControls = false
     this.hideAllControls()
 
@@ -1457,6 +1432,7 @@ export class VideoPlayer
 
   private showInterface(): void
   {
+    if (!this.config.showControls) return
     this.playerElement.classList.remove('player--hide-interface')
   }
 
@@ -1591,7 +1567,6 @@ export class VideoPlayer
   private initializeDraggablePanels()
   {
     this.draggablePanels = [this.playlistPanel, this.previewPanel]
-
     this.draggablePanels.forEach(panel => {
       if (panel) {
         this.zIndex.push(panel.id)
@@ -1663,7 +1638,7 @@ export class VideoPlayer
     })
 
     // Check if there's enough space for the horizontal volume slider
-    const availableWidth = panel.clientWidth - 30 // 30px for panel padding
+    const availableWidth = panel.clientWidth - 30 // 30px padding
     const requiredWidth = totalChildrenWidth + horizontalVolumeWidth
 
     if (requiredWidth > availableWidth) {

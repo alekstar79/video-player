@@ -32,6 +32,8 @@ export interface VideoPlayerConfig {
   width?: string | number;    // '100%', 800, '800px'
   height?: string | number;   // '100%', 450, '450px'
   aspectRatio?: string;       // '16:9', '4:3', '21:9'
+  nextButton?: boolean;
+  prevButton?: boolean;
 }
 
 export interface TimeUpdateEvent {
