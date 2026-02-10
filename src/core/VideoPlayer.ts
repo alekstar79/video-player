@@ -221,18 +221,20 @@ export class VideoPlayer
     this.handleResize()
   }
 
-  private awaitLayout(selector: string, timeout: number = 990): Promise<void>
+  private awaitLayout(selector: string, ms: number = 990): Promise<void>
   {
     return new Promise(resolve => {
       let el: HTMLElement | null
 
-      const checkDimensions = () => {
-        el ??= this.root.querySelector(selector)
+      const checkDimensions = (deadline: IdleDeadline) => {
+        while (!el && deadline.timeRemaining() > 0) {
+          el ??= this.root.querySelector(selector)
+        }
 
         if (!el || el.offsetWidth <= 0) {
           requestIdleCallback(checkDimensions)
         } else {
-          setTimeout(resolve, timeout)
+          setTimeout(resolve, ms)
         }
       }
 
