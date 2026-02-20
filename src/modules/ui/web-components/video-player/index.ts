@@ -6,6 +6,8 @@ import { VideoPlayer } from '@/core/VideoPlayer'
 import template from './template.html?raw'
 import styles from './style.scss?inline'
 
+import { createContextMenu, styles as menu } from './context-menu'
+
 interface AttributeMap {
   [key: string]: {
     configKey: keyof VideoPlayerConfig | keyof ControlsVisibility,
@@ -15,8 +17,8 @@ interface AttributeMap {
 
 export default class VideoPlayerComponent extends BaseComponent
 {
-  private playerInstance?: VideoPlayer
-  private readyPromise?: Promise<VideoPlayer>
+  private readyPromise!: Promise<VideoPlayer>
+  private playerInstance!: VideoPlayer
 
   // Properties to accept configuration
   public initialSources: (string | Partial<VideoSource>)[] = []
@@ -36,12 +38,12 @@ export default class VideoPlayerComponent extends BaseComponent
   constructor()
   {
     super()
-    this.render(template, styles)
+    this.render(template, `${styles}\n${menu}`)
   }
 
   connectedCallback()
   {
-    this.whenReady().catch(console.error)
+    this.whenReady().then(createContextMenu)
   }
 
   private parseAttribute(name: string, value: string | null): any
@@ -82,89 +84,88 @@ export default class VideoPlayerComponent extends BaseComponent
     return (this.readyPromise ??= new Promise(
       (resolve) => {
         // Defer initialization to ensure all properties are set
-        setTimeout(() => {
-          // Start with programmatically set properties as the base
-          const baseConfig: Partial<VideoPlayerConfig> = {
-            initialSources: this.initialSources,
-            maxWidth: this.maxWidth,
-            aspectRatio: this.aspectRatio,
-            loopMode: this.loopMode,
-            muted: this.muted,
-            autoPlay: this.autoPlay,
-            initialVolume: this.initialVolume,
-            playbackRate: this.playbackRate,
-            showControls: this.showControls,
-            nextButton: this.nextButton,
-            prevButton: this.prevButton,
-            logging: this.logging
-          }
+        // Start with programmatically set properties as the base
+        const baseConfig: Partial<VideoPlayerConfig> = {
+          initialSources: this.initialSources,
+          maxWidth: this.maxWidth,
+          aspectRatio: this.aspectRatio,
+          loopMode: this.loopMode,
+          muted: this.muted,
+          autoPlay: this.autoPlay,
+          initialVolume: this.initialVolume,
+          playbackRate: this.playbackRate,
+          showControls: this.showControls,
+          nextButton: this.nextButton,
+          prevButton: this.prevButton,
+          logging: this.logging
+        }
 
-          const baseControlsVisibility = this.controlsVisibility || {}
+        const baseControlsVisibility = this.controlsVisibility || {}
 
-          // Parse attributes and create a config from them
-          const attrConfig: Partial<VideoPlayerConfig> = {}
-          const attrControlsVisibility: Partial<ControlsVisibility> = {}
+        // Parse attributes and create a config from them
+        const attrConfig: Partial<VideoPlayerConfig> = {}
+        const attrControlsVisibility: Partial<ControlsVisibility> = {}
 
-          const attributeMap: AttributeMap = {
-            // adjustment attributes
-            'initial-sources': { configKey: 'initialSources', isControl: false },
-            'aspect-ratio': { configKey: 'aspectRatio', isControl: false },
-            'max-width': { configKey: 'maxWidth', isControl: false },
-            'loop-mode': { configKey: 'loopMode', isControl: false },
-            'auto-play': { configKey: 'autoPlay', isControl: false },
-            'muted': { configKey: 'muted', isControl: false },
-            'logging': { configKey: 'logging', isControl: false },
-            'initial-volume': { configKey: 'initialVolume', isControl: false },
-            'playback-rate': { configKey: 'playbackRate', isControl: false },
-            'show-controls': { configKey: 'showControls', isControl: false },
-            'next-button': { configKey: 'nextButton', isControl: false },
-            'prev-button': { configKey: 'prevButton', isControl: false },
-            // controls
-            'show-fullscreen': { configKey: 'showFullscreen', isControl: true },
-            'show-loop': { configKey: 'showLoop', isControl: true },
-            'show-openfile': { configKey: 'showOpenFile', isControl: true },
-            'show-open-file': { configKey: 'showOpenFile', isControl: true }, // Alias
-            'show-pip': { configKey: 'showPip', isControl: true },
-            'show-playpause': { configKey: 'showPlayPause', isControl: true },
-            'show-play-pause': { configKey: 'showPlayPause', isControl: true }, // Alias
-            'show-skipbuttons': { configKey: 'showSkipButtons', isControl: true },
-            'show-skip-buttons': { configKey: 'showSkipButtons', isControl: true }, // Alias
-            'show-speed': { configKey: 'showSpeed', isControl: true },
-            'show-timedisplay': { configKey: 'showTimeDisplay', isControl: true },
-            'show-time-display': { configKey: 'showTimeDisplay', isControl: true }, // Alias
-            'show-timeline': { configKey: 'showTimeline', isControl: true },
-            'show-volume': { configKey: 'showVolume', isControl: true }
-          }
+        const attributeMap: AttributeMap = {
+          // adjustment attributes
+          'initial-sources': { configKey: 'initialSources', isControl: false },
+          'aspect-ratio': { configKey: 'aspectRatio', isControl: false },
+          'max-width': { configKey: 'maxWidth', isControl: false },
+          'loop-mode': { configKey: 'loopMode', isControl: false },
+          'auto-play': { configKey: 'autoPlay', isControl: false },
+          'muted': { configKey: 'muted', isControl: false },
+          'logging': { configKey: 'logging', isControl: false },
+          'initial-volume': { configKey: 'initialVolume', isControl: false },
+          'playback-rate': { configKey: 'playbackRate', isControl: false },
+          'show-controls': { configKey: 'showControls', isControl: false },
+          'next-button': { configKey: 'nextButton', isControl: false },
+          'prev-button': { configKey: 'prevButton', isControl: false },
+          // controls
+          'show-fullscreen': { configKey: 'showFullscreen', isControl: true },
+          'show-loop': { configKey: 'showLoop', isControl: true },
+          'show-openfile': { configKey: 'showOpenFile', isControl: true },
+          'show-open-file': { configKey: 'showOpenFile', isControl: true }, // Alias
+          'show-pip': { configKey: 'showPip', isControl: true },
+          'show-playpause': { configKey: 'showPlayPause', isControl: true },
+          'show-play-pause': { configKey: 'showPlayPause', isControl: true }, // Alias
+          'show-skipbuttons': { configKey: 'showSkipButtons', isControl: true },
+          'show-skip-buttons': { configKey: 'showSkipButtons', isControl: true }, // Alias
+          'show-speed': { configKey: 'showSpeed', isControl: true },
+          'show-timedisplay': { configKey: 'showTimeDisplay', isControl: true },
+          'show-time-display': { configKey: 'showTimeDisplay', isControl: true }, // Alias
+          'show-timeline': { configKey: 'showTimeline', isControl: true },
+          'show-volume': { configKey: 'showVolume', isControl: true }
+        }
 
-          for (const attr of this.attributes) {
-            const { name, value } = attr;
-            const mapping = attributeMap[name]
+        for (const attr of this.attributes) {
+          const { name, value } = attr;
+          const mapping = attributeMap[name]
 
-            if (mapping) {
-              const parsedValue = this.parseAttribute(name, value)
+          if (mapping) {
+            const parsedValue = this.parseAttribute(name, value)
 
-              if (mapping.isControl) {
-                (attrControlsVisibility as any)[mapping.configKey] = parsedValue
-              } else {
-                (attrConfig as any)[mapping.configKey] = parsedValue
-              }
+            if (mapping.isControl) {
+              (attrControlsVisibility as any)[mapping.configKey] = parsedValue
+            } else {
+              (attrConfig as any)[mapping.configKey] = parsedValue
             }
           }
+        }
 
-          // Merge configs: attributes override programmatic properties
-          const finalConfig: VideoPlayerConfig = {
-            container: this,
-            ...baseConfig,
-            ...attrConfig,
-            showControls: attrConfig.showControls ?? baseConfig.showControls ?? true,
-            controlsVisibility: {
-              ...baseControlsVisibility,
-              ...attrControlsVisibility
-            }
+        // Merge configs: attributes override programmatic properties
+        const finalConfig: VideoPlayerConfig = {
+          container: this,
+          ...baseConfig,
+          ...attrConfig,
+          showControls: attrConfig.showControls ?? baseConfig.showControls ?? true,
+          controlsVisibility: {
+            ...baseControlsVisibility,
+            ...attrControlsVisibility
           }
+        }
 
-          this.playerInstance ??= new VideoPlayer(finalConfig, this.shadow)
-
+        this.playerInstance ??= new VideoPlayer(finalConfig, this.shadow)
+        this.playerInstance.on('mounted', () => {
           resolve(this.playerInstance)
         })
       }

@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@alekstar79/context-menu@^2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@alekstar79/context-menu/-/context-menu-2.0.5.tgz#6e1f847b5c6a7a7931a8dadda93f5d90a43003aa"
+  integrity sha512-HX+mbanHZc8ontrLxWRR/A6+Yy+mEnS5/3rQgl5Tgxb86m1b4uisr1B144Xzwi6TWRhne7VCg8ERMeerT0rMkA==
+
 "@esbuild/aix-ppc64@0.27.2":
   version "0.27.2"
   resolved "https://registry.yarnpkg.com/@esbuild/aix-ppc64/-/aix-ppc64-0.27.2.tgz#521cbd968dcf362094034947f76fa1b18d2d403c"

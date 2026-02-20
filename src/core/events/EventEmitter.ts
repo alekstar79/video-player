@@ -3,12 +3,12 @@
  */
 export class EventEmitter<TEvents extends Record<string, any>>
 {
-  private listeners: Partial<{ [K in keyof TEvents]: ((data: TEvents[K]) => void)[] }> = {}
+  private listeners: Partial<{ [K in keyof TEvents]: ((data: TEvents[K] | undefined) => void)[] }> = {}
 
   /**
    * Subscribe to an event
    */
-  on<K extends keyof TEvents>(event: K, callback: (data: TEvents[K]) => void): void
+  on<K extends keyof TEvents>(event: K, callback: (data: TEvents[K] | undefined) => void): void
   {
     if (!this.listeners[event]) {
       this.listeners[event] = []
@@ -31,7 +31,7 @@ export class EventEmitter<TEvents extends Record<string, any>>
   /**
    * Emit an event to all subscribers
    */
-  emit<K extends keyof TEvents>(event: K, data: TEvents[K]): void
+  emit<K extends keyof TEvents>(event: K, data?: TEvents[K]): void
   {
     if (!this.listeners[event]) return
 

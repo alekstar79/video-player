@@ -76,6 +76,14 @@ export class Helpers
   }
 
   /**
+   * Check if a value is promises
+   */
+  static isPromiseLike<T extends any>(value: any): value is PromiseLike<T>
+  {
+    return value && (value as PromiseLike<T>).then !== undefined
+  }
+
+  /**
    * Check if a URL is cross-origin
    */
   static isCrossOrigin(url: string): boolean

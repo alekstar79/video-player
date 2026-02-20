@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Create video-player instance
     const player = await createPlayer(container, { initialSources: videos })
 
-    // player.setSources(videos)
+    player.on('context', data => console.log(data))
 
     player.on('loopmodechanged', (mode) => {
       if (player.logging) {

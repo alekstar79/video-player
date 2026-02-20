@@ -65,6 +65,8 @@ export type PlayerEventMap = {
   'error': Error;
   'sourcechanged': number;
   'loopmodechanged': LoopMode;
+  'mounted': void;
+  'context': any
 }
 
 /**

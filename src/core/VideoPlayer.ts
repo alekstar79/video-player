@@ -31,12 +31,13 @@ import {
  */
 export class VideoPlayer
 {
-  private readonly container: HTMLElement
-  private readonly root: Document | ShadowRoot
+  public events: EventEmitter<PlayerEventMap>
+  public playerElement!: HTMLElement
+
+  public readonly root: Document | ShadowRoot
+  public readonly container: HTMLElement
 
   private config: VideoPlayerConfig
-  private playerElement!: HTMLElement
-  private events: EventEmitter<PlayerEventMap>
   private controlsVisibility: Required<ControlsVisibility>
   private isShowControls: boolean
 
@@ -120,7 +121,9 @@ export class VideoPlayer
     this.loopMode = config.loopMode || 'none'
 
     this.initializeControlsVisibility()
-    this.initializePlayer().catch(console.error)
+    this.initializePlayer()
+      .then(() => this.events.emit('mounted'))
+      .catch(console.error)
   }
 
   private normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[] {
@@ -1428,12 +1431,12 @@ export class VideoPlayer
 
   // Event System
 
-  on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K]) => void): void
+  on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void
   {
     this.events.on(event, callback)
   }
 
-  off<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K]) => void): void
+  off<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void
   {
     this.events.off(event, callback)
   }
