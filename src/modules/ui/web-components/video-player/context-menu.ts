@@ -10,47 +10,44 @@ export const config = () => defineConfig({
   innerRadius: 75,
   outerRadius: 150,
   opacity: 0.7,
+  zIndex: 9,
   hintPadding: 2,
-  // Global overrides for all icons
   // iconRadius: 100, // Uncomment to move all icons further out
-  iconScale: 0.75, // Uncomment to make all icons smaller
+  iconScale: 0.75,
   sectors: [
     {
-      icon: 'new',
-      hint: 'New',
+      icon: 'list-ul',
+      hint: 'Playlist'
     },
     {
-      icon: 'open',
-      hint: 'Open',
+      icon: 'forward',
+      hint: 'Forward',
+      rotate: -90
     },
     {
-      icon: 'link',
-      hint: 'Link',
+      icon: 'expand',
+      hint: 'Fullscreen'
     },
     {
-      icon: 'webcam',
-      hint: 'Webcam',
-      // Manual override for a specific icon
-      // iconRadius: 100, // Move this icon further out
-      // iconScale: 0.5, // Make this icon smaller
+      icon: 'folder-open',
+      hint: 'Open'
     },
     {
-      icon: 'calc',
-      hint: 'Calculator',
+      icon: 'backward',
+      hint: 'Backward',
+      rotate: 90
     },
     {
-      icon: 'pixabay',
-      hint: 'Pixabay',
+      icon: 'camera',
+      hint: 'Preview',
     }
   ],
   centralButton: {
-    icon: 'about',
-    hint: 'Home',
+    icon: 'play',
+    hint: 'Play',
     // hintSpan: 180,
     // iconRadius: 50,
     // iconScale: 0.75
-    // hintStartAngle: 290,
-    // hintEndAngle: 70,
     // hintPosition: 'bottom'
   }
 })

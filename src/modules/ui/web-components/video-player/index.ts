@@ -61,7 +61,6 @@ export default class VideoPlayerComponent extends BaseComponent
 
     if (name === 'initial-sources' && value) {
       try {
-        // Use Function constructor to parse JavaScript literal. It's safer than eval.
         return new Function(`return ${value}`)()
       } catch (e) {
         console.error(`Error parsing initial-sources attribute: "${value}"`, e)
@@ -83,7 +82,8 @@ export default class VideoPlayerComponent extends BaseComponent
   {
     return (this.readyPromise ??= new Promise(
       (resolve) => {
-        // Defer initialization to ensure all properties are set
+        if (this.playerInstance) return resolve(this.playerInstance)
+
         // Start with programmatically set properties as the base
         const baseConfig: Partial<VideoPlayerConfig> = {
           initialSources: this.initialSources,
@@ -153,7 +153,7 @@ export default class VideoPlayerComponent extends BaseComponent
         }
 
         // Merge configs: attributes override programmatic properties
-        const finalConfig: VideoPlayerConfig = {
+        const config: VideoPlayerConfig = {
           container: this,
           ...baseConfig,
           ...attrConfig,
@@ -164,7 +164,7 @@ export default class VideoPlayerComponent extends BaseComponent
           }
         }
 
-        this.playerInstance ??= new VideoPlayer(finalConfig, this.shadow)
+        this.playerInstance = new VideoPlayer(config, this.shadow)
         this.playerInstance.on('mounted', () => {
           resolve(this.playerInstance)
         })

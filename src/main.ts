@@ -44,9 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     player.on('context', data => console.log(data))
 
     player.on('loopmodechanged', (mode) => {
-      if (player.logging) {
-        console.log('Loop mode changed to:', mode)
-      }
+      player.logging && console.log('Loop mode changed to:', mode)
     })
 
     if (player.logging) {
