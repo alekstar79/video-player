@@ -1,6 +1,6 @@
 {
   "name": "video-player-ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Video player built with TypeScript and Vite",
   "scripts": {
@@ -16,6 +16,6 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
-    "@alekstar79/context-menu": "^2.0.6"
+    "@alekstar79/context-menu": "^2.0.8"
   }
 }

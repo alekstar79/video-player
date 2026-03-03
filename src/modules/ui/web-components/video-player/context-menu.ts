@@ -16,31 +16,42 @@ export const config = () => defineConfig({
   iconScale: 0.75,
   sectors: [
     {
-      icon: 'list-ul',
+      icon: 'playlist',
       hint: 'Playlist'
     },
     {
-      icon: 'forward',
-      hint: 'Forward',
+      icon: 'next',
+      hint: 'Next',
       rotate: -90
     },
+    // {
+    //   icon: 'forward',
+    //   hint: 'Forward',
+    //   rotate: -90
+    // },
     {
       icon: 'expand',
       hint: 'Fullscreen'
     },
     {
-      icon: 'folder-open',
+      icon: 'open',
       hint: 'Open'
     },
+    // {
+    //   icon: 'backward',
+    //   hint: 'Backward',
+    //   rotate: 90
+    // },
     {
-      icon: 'backward',
-      hint: 'Backward',
-      rotate: 90
+       icon: 'prev',
+       hint: 'Prev',
+       rotate: 90
     },
     {
-      icon: 'camera',
+      icon: 'preview',
       hint: 'Preview',
-    }
+    },
+
   ],
   centralButton: {
     icon: 'play',
@@ -55,26 +66,41 @@ export const config = () => defineConfig({
 const resolver = (player: VideoPlayer | PromiseLike<VideoPlayer>) => {
   return Helpers.isPromiseLike(player)
     ? player.then((player) => ({
-      menu: new Manager(player.playerElement, config()),
+      manager: new Manager(player.playerElement, config()),
       player
     }))
     : Promise.resolve({
-      menu: new Manager(player.playerElement, config()),
+      manager: new Manager(player.playerElement, config()),
       player
     })
 }
 
 export const createContextMenu = async (vp: VideoPlayer | PromiseLike<VideoPlayer>) => {
-  const { player, menu } = await resolver(vp)
+  const { player, manager } = await resolver(vp)
 
-  menu.on('click', (data: ISector) => {
+  player.context = manager
+  manager.menu.updateButtons()
+
+  manager.on('click', (data: ISector) => {
+    if (data.icon === 'play' || data.icon === 'pause') {
+      // console.log('click', manager.menu.config.centralButton, manager.menu.config.sectors, data)
+
+      manager.menu.config.centralButton = {
+        icon: data.icon === 'play' ? 'pause' : 'play',
+        hint: data.icon === 'play' ? 'Pause' : 'Play'
+      }
+
+      manager.menu.updateButtons()
+      manager.menu.hide()
+    }
+
     player.events.emit('context', data)
   })
 
   player.playerElement
     .addEventListener('contextmenu', e => {
       e.preventDefault()
-      menu.show(e)
+      manager.show(e)
     })
 }
 

@@ -1,8 +1,26 @@
+import { EventEmitter } from '@/core/events/EventEmitter'
+import { FullscreenController } from '@/modules/controls/FullscreenController'
+import { PlaybackController } from '@/modules/controls/PlaybackController'
+import { TimelineController } from '@/modules/controls/TimelineController'
+import { VideoController } from '@/modules/controls/VideoController'
+import { VolumeController } from '@/modules/controls/VolumeController'
+
+import {
+  FullscreenButtonComponent,
+  LoopButtonComponent,
+  PipButtonComponent,
+  PlaylistButtonComponent,
+  PlayPauseButtonComponent,
+  PreviewButtonComponent,
+  TimeDisplayComponent,
+  VolumeControlComponent,
+} from '@/modules/ui/web-components'
+
 /**
  * Core types and interfaces for the video player
  */
 
-export type LoopMode = 'none' | 'one' | 'all';
+export type LoopMode = 'none' | 'one' | 'all'
 
 export interface ControlsVisibility {
   showOpenFile?: boolean;
@@ -146,4 +164,201 @@ export interface ZIndexInterface {
   push(uid: string): this;
   remove(uid: string): this;
   sort(uid: string): this;
+}
+
+export interface VideoPlayerInterface {
+  events: EventEmitter<PlayerEventMap>;
+  playerElement: Element | PromiseLike<HTMLElement> | null
+  root: Document | ShadowRoot;
+  container: HTMLElement;
+  config: VideoPlayerConfig;
+  controlsVisibility: Required<ControlsVisibility>;
+  isShowControls: boolean;
+  videoController: VideoController
+  volumeController: VolumeController
+  playbackController: PlaybackController
+  fullscreenController: FullscreenController
+  timelineController: TimelineController
+  playPauseButton: PlayPauseButtonComponent
+  loopButton: LoopButtonComponent
+  fullscreenButton: FullscreenButtonComponent
+  pipButton: PipButtonComponent
+  timeDisplay: TimeDisplayComponent
+  playlistButton: PlaylistButtonComponent
+  playlistPanel: HTMLElement
+  previewButton: PreviewButtonComponent
+  previewPanel: HTMLElement
+  volumeControl: VolumeControlComponent
+  sourceTitleElement: HTMLElement
+  noFilesMessage: HTMLElement
+  zIndex: ZIndexInterface;
+  draggablePanels: HTMLElement[];
+  resizeHandlers: Map<string, () => void>;
+  sources: VideoSource[];
+  currentSourceIndex: number;
+  interfaceTimeout: string | number | NodeJS.Timeout | undefined
+  titleTimeout: string | number | NodeJS.Timeout | undefined
+  isMouseOverControls: boolean;
+  sourcePrevButton: HTMLElement
+  sourceNextButton: HTMLElement
+  loopMode: LoopMode;
+  logging: boolean;
+
+  normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[];
+
+  initializeControlsVisibility(): void;
+  initializePlayer(): Promise<void>;
+
+  toggleNoFilesMessage(show: boolean): void;
+
+  applyContainerSizes(): void;
+  awaitLayout(selector: string, ms: number): Promise<void>;
+  applyAspectRatio(ratio: string): void;
+
+  applyIndividualControlsVisibility(): void;
+
+  loadInitialSources(): Promise<void>;
+
+  tryNextSource(): Promise<void>;
+
+  loadSourceByIndex(index: number, playAfterLoad?: boolean): Promise<void>;
+
+  highlightSourceNavigation(): void;
+
+  hideAllControls(): void;
+
+  showAllControls(): void;
+
+  initializeDraggablePanels(): void;
+  initializeControllers(): void;
+  initInterfaceAutoHide(): void;
+
+  checkPictureInPictureSupport(): { supported: boolean; reason?: string };
+
+  bindEventListeners(): void;
+
+  bindKeyboardEvents(): void;
+
+  initializePiPListeners(): void;
+
+
+  handleEnterPiP(): void;
+  handleLeavePiP(): void;
+
+  resetInterfaceTimeout(): void;
+
+  handleResize(): void;
+
+  updateSourceNavigationVisibility(): void;
+
+  handleTimeUpdate(currentTime: number, duration: number): void;
+
+  handleVolumeChange(volume: number, muted: boolean): void;
+
+  handlePlay(): void;
+  handlePause(): void;
+
+  handleEnded(): void;
+
+  handleLoadedMetadata(): void;
+
+  handleError(error: Error): void;
+
+  handleFullscreenChange(isFullscreen: boolean): void;
+
+  adjustSourceNavigationPosition(): void;
+
+  applyLoopMode(): void;
+  updateLoopButton(): void;
+
+  showControl(control: keyof ControlsVisibility): void;
+  hideControl(control: keyof ControlsVisibility): void;
+  toggleControl(control: keyof ControlsVisibility): void;
+
+  getControlVisibility(control: keyof ControlsVisibility): boolean;
+
+  addSource(source: Partial<VideoSource>): void;
+  getSources(): VideoSource[];
+  setSources(sources: (string | Partial<VideoSource>)[]): void;
+  getCurrentSource(): VideoSource | undefined;
+  getCurrentSourceIndex(): number;
+  nextSource(): Promise<void>;
+  previousSource(): Promise<void>;
+
+  setControlsVisibility(visibility: Partial<ControlsVisibility>): void;
+
+  switchToSource(index: number): Promise<void>;
+  switchToSourceByUrl(url: string): Promise<void>;
+
+  setSource(src: string, muted: boolean): void;
+
+  loadVideoFile(): Promise<void>;
+  loadVideoFromUrl(url: string): Promise<void>;
+
+  play(): Promise<void>;
+  pause(): void;
+
+  togglePlay(): Promise<void>;
+  toggleFullscreen(): Promise<void>;
+  togglePictureInPicture(): Promise<void>;
+
+  isPictureInPictureSupported(): boolean;
+
+  showControls(): void;
+  hideControls(): void;
+  toggleControls(): void;
+
+  getControlsVisible(): boolean;
+
+  setVolume(volume: number): void;
+  setMuted(muted: boolean): void;
+
+  setPlaybackRate(rate: number): void;
+
+  getLoop(): boolean;
+  setLoop(loop: boolean): void;
+
+  toggleLoop(): void;
+  getLoopMode(): LoopMode;
+  setLoopMode(mode: LoopMode): void;
+
+  skip(seconds: number): void;
+  seekTo(time: number): void;
+
+  getCurrentTime(): number;
+
+  getDuration(): number;
+
+  getVolume(): number;
+  getIsMuted(): boolean;
+
+  getIsPlaying(): boolean;
+
+  getPlaybackRate(): number;
+
+  on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void;
+  off<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void;
+
+  showInterface(): void;
+  hideInterface(): void;
+
+  isPlayerActive(): boolean;
+
+  updatePlaylist(): void;
+
+  togglePlaylist(): void;
+  togglePreviewPanel(): Promise<void>;
+
+  handleFileLoaded(file: File, url: string): Promise<void>;
+
+  generateAndShowPreview(): Promise<void>;
+
+  showSourceTitle(): void;
+
+  handlePanelFocus(panelId: string): void;
+
+  adjustPanelsToViewport(): void;
+  adjustVolumeOrientation(): void;
+
+  destroy(): void;
 }

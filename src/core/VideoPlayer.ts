@@ -1,15 +1,26 @@
-import type { ControlsVisibility, LoopMode, PlayerEventMap, TimeUpdateEvent, VideoPlayerConfig, VideoSource, ZIndexInterface } from '@/types'
+import type { ISector } from '@alekstar79/context-menu'
 
-import { EventEmitter } from '@/core/events/EventEmitter.ts'
-import { FullscreenController } from '@/modules/controls/FullscreenController.ts'
-import { PlaybackController } from '@/modules/controls/PlaybackController.ts'
-import { TimelineController } from '@/modules/controls/TimelineController.ts'
-import { VideoController } from '@/modules/controls/VideoController.ts'
-import { VolumeController } from '@/modules/controls/VolumeController.ts'
+import type {
+  ControlsVisibility,
+  LoopMode,
+  PlayerEventMap,
+  TimeUpdateEvent,
+  VideoPlayerConfig,
+  VideoPlayerInterface,
+  VideoSource,
+  ZIndexInterface
+} from '@/types'
+
+import { EventEmitter } from '@/core/events/EventEmitter'
+import { FullscreenController } from '@/modules/controls/FullscreenController'
+import { PlaybackController } from '@/modules/controls/PlaybackController'
+import { TimelineController } from '@/modules/controls/TimelineController'
+import { VideoController } from '@/modules/controls/VideoController'
+import { VolumeController } from '@/modules/controls/VolumeController'
 import { Helpers, zIndex } from '@/core/utils'
 import { getMetadata } from '@/core/metadata'
 
-import {
+import type {
   FullscreenButtonComponent,
   LoopButtonComponent,
   PipButtonComponent,
@@ -22,64 +33,64 @@ import {
   SpeedOptionsComponent,
   TimeDisplayComponent,
   TimelineComponent,
-  VolumeControlComponent,
-  whenDefined
+  VolumeControlComponent
 } from '@/modules/ui/web-components'
+
+import { whenDefined } from '@/modules/ui/web-components'
 
 /**
  * Main Video Player class - orchestrates all components
  */
-export class VideoPlayer
-{
-  public events: EventEmitter<PlayerEventMap>
-  public playerElement!: HTMLElement
+export class VideoPlayer implements VideoPlayerInterface {
+  events: EventEmitter<PlayerEventMap>
+  playerElement!: HTMLElement
 
-  public readonly root: Document | ShadowRoot
-  public readonly container: HTMLElement
+  readonly root: Document | ShadowRoot
+  readonly container: HTMLElement
 
-  private config: VideoPlayerConfig
-  private controlsVisibility: Required<ControlsVisibility>
-  private isShowControls: boolean
+  config: VideoPlayerConfig
+  controlsVisibility: Required<ControlsVisibility>
+  isShowControls: boolean
 
   // Core Components
-  private videoController!: VideoController
-  private volumeController!: VolumeController
-  private playbackController!: PlaybackController
-  private fullscreenController!: FullscreenController
-  private timelineController!: TimelineController
+  videoController!: VideoController
+  volumeController!: VolumeController
+  playbackController!: PlaybackController
+  fullscreenController!: FullscreenController
+  timelineController!: TimelineController
 
   // UI Components
-  private playPauseButton!: PlayPauseButtonComponent
-  private loopButton!: LoopButtonComponent
-  private fullscreenButton!: FullscreenButtonComponent
-  private pipButton!: PipButtonComponent
-  private timeDisplay!: TimeDisplayComponent
-  private playlistButton!: PlaylistButtonComponent
-  private playlistPanel!: PlaylistPanelComponent
-  private previewButton!: PreviewButtonComponent
-  private previewPanel!: PreviewPanelComponent
-  private volumeControl!: VolumeControlComponent
-  private sourceTitleElement!: HTMLElement
-  private noFilesMessage!: HTMLElement
+  playPauseButton!: PlayPauseButtonComponent
+  loopButton!: LoopButtonComponent
+  fullscreenButton!: FullscreenButtonComponent
+  pipButton!: PipButtonComponent
+  timeDisplay!: TimeDisplayComponent
+  playlistButton!: PlaylistButtonComponent
+  playlistPanel!: PlaylistPanelComponent
+  previewButton!: PreviewButtonComponent
+  previewPanel!: PreviewPanelComponent
+  volumeControl!: VolumeControlComponent
+  sourceTitleElement!: HTMLElement
+  noFilesMessage!: HTMLElement
 
   // Z-Index & Resize
-  private zIndex: ZIndexInterface
-  private draggablePanels: HTMLElement[] = []
-  private readonly resizeHandlers: Map<string, () => void> = new Map()
+  zIndex: ZIndexInterface
+  draggablePanels: HTMLElement[] = []
+  readonly resizeHandlers: Map<string, () => void> = new Map()
 
   // State
-  private sources: VideoSource[] = []
-  private currentSourceIndex: number = 0
-  private interfaceTimeout!: ReturnType<typeof setTimeout>
-  private titleTimeout!: ReturnType<typeof setTimeout>
-  private isMouseOverControls: boolean = false
+  sources: VideoSource[] = []
+  currentSourceIndex: number = 0
+  interfaceTimeout!: ReturnType<typeof setTimeout>
+  titleTimeout!: ReturnType<typeof setTimeout>
+  isMouseOverControls: boolean = false
 
-  private sourcePrevButton!: HTMLElement
-  private sourceNextButton!: HTMLElement
+  sourcePrevButton!: HTMLElement
+  sourceNextButton!: HTMLElement
 
-  private loopMode: LoopMode = 'none'
+  loopMode: LoopMode = 'none'
 
-  public logging: boolean = false
+  logging: boolean = false
 
   constructor(config: VideoPlayerConfig, root: Document | ShadowRoot = document)
   {
@@ -124,9 +135,46 @@ export class VideoPlayer
     this.initializePlayer()
       .then(() => this.events.emit('mounted'))
       .catch(console.error)
+
+    this.on('context', async ({ icon: command }: ISector) => {
+
+      switch (command) {
+        case 'pause':
+        case 'play':
+          console.log(this)
+          await this.togglePlay()
+          break
+        case 'forward':
+          this.skip(5)
+          break
+        case 'backward':
+          this.skip(-5)
+          break
+        case 'expand':
+          await this.toggleFullscreen()
+          break
+        case 'playlist':
+          this.togglePlaylist()
+          break
+        case 'preview':
+          await this.togglePreviewPanel()
+          break
+        case 'open':
+          await this.loadVideoFile()
+          break
+        case 'prev':
+          await this.previousSource()
+          break
+        case 'next':
+          await this.nextSource()
+          break
+      }
+
+      this.resetInterfaceTimeout()
+    })
   }
 
-  private normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[] {
+  normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[] {
     return sources.map(source => {
       if (typeof source === 'string') {
         return {
@@ -147,8 +195,7 @@ export class VideoPlayer
     })
   }
 
-  private initializeControlsVisibility(): void
-  {
+  initializeControlsVisibility(): void {
     // Combine user settings with default settings
     this.controlsVisibility = {
       ...this.controlsVisibility,
@@ -159,8 +206,7 @@ export class VideoPlayer
   /**
    * Initialize the video player
    */
-  private async initializePlayer(): Promise<void>
-  {
+  async initializePlayer(): Promise<void> {
     // Wait for the components to be ready
     await whenDefined()
 
@@ -224,8 +270,7 @@ export class VideoPlayer
     this.handleResize()
   }
 
-  private awaitLayout(selector: string, ms: number = 990): Promise<void>
-  {
+  awaitLayout(selector: string, ms: number = 990): Promise<void> {
     return new Promise(resolve => {
       let el: HTMLElement | null
 
@@ -245,8 +290,7 @@ export class VideoPlayer
     })
   }
 
-  private toggleNoFilesMessage(show: boolean): void
-  {
+  toggleNoFilesMessage(show: boolean): void {
     if (this.noFilesMessage) {
       this.noFilesMessage.style.display = show ? 'block' : 'none'
     }
@@ -255,8 +299,7 @@ export class VideoPlayer
   /**
    * Apply container sizes from config
    */
-  private applyContainerSizes(): void
-  {
+  applyContainerSizes(): void {
     // Applying maximum width
     if (this.config.maxWidth) {
       if (typeof this.config.maxWidth === 'number') {
@@ -305,8 +348,7 @@ export class VideoPlayer
   /**
    * Apply aspect ratio to container
    */
-  private applyAspectRatio(ratio: string): void
-  {
+  applyAspectRatio(ratio: string): void {
     const [width, height] = ratio.split(':').map(Number)
 
     if (width && height) {
@@ -329,8 +371,7 @@ export class VideoPlayer
     }
   }
 
-  private applyIndividualControlsVisibility(): void
-  {
+  applyIndividualControlsVisibility(): void {
     if (!this.config.showControls) return
 
     Object.entries({
@@ -355,8 +396,7 @@ export class VideoPlayer
   /**
    * Load initial video sources from array
    */
-  private async loadInitialSources(): Promise<void>
-  {
+  async loadInitialSources(): Promise<void> {
     if (this.sources.length === 0) {
       if (this.logging) console.log('No initial sources provided')
       return
@@ -375,7 +415,7 @@ export class VideoPlayer
       if (this.config.autoPlay) {
         // Mute is often required for autoplay to work
         if (!this.config.muted) {
-           if (this.logging) console.warn('Autoplay may not work without the player being muted.')
+          if (this.logging) console.warn('Autoplay may not work without the player being muted.')
         }
 
         await this.videoController.play()
@@ -404,8 +444,7 @@ export class VideoPlayer
   /**
    * Try to load next source when current fails
    */
-  public async tryNextSource(): Promise<void>
-  {
+  async tryNextSource(): Promise<void> {
     const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
     if (nextIndex === 0) {
       this.events.emit('error', new Error('All video sources failed to load'))
@@ -423,8 +462,7 @@ export class VideoPlayer
   /**
    * Load specific source by index
    */
-  public async loadSourceByIndex(index: number, playAfterLoad?: boolean): Promise<void>
-  {
+  async loadSourceByIndex(index: number, playAfterLoad?: boolean): Promise<void> {
     if (index < 0 || index >= this.sources.length) {
       throw new Error(`Invalid source index: ${index}`)
     }
@@ -456,8 +494,7 @@ export class VideoPlayer
     this.events.emit('sourcechanged', index)
   }
 
-  private highlightSourceNavigation(): void
-  {
+  highlightSourceNavigation(): void {
     if (this.sourcePrevButton && this.sourceNextButton) {
       this.sourcePrevButton.classList.add('player__source-nav--pulse')
       this.sourceNextButton.classList.add('player__source-nav--pulse')
@@ -472,8 +509,7 @@ export class VideoPlayer
   /**
    * Hide all control elements
    */
-  private hideAllControls(): void
-  {
+  hideAllControls(): void {
     ['.player__panel', '.player__top-panel', '.player__main-icon']
       .forEach(selector => {
         this.root.querySelectorAll<HTMLElement>(selector)
@@ -492,8 +528,7 @@ export class VideoPlayer
   /**
    * Show all control elements
    */
-  private showAllControls(): void
-  {
+  showAllControls(): void {
     ['.player__panel', '.player__top-panel', '.player__main-icon']
       .forEach(selector => {
         this.root.querySelectorAll<HTMLElement>(selector)
@@ -515,8 +550,7 @@ export class VideoPlayer
   /**
    * Initialize all controllers with correct element selectors
    */
-  private initializeControllers(): void
-  {
+  initializeControllers(): void {
     const videoElement = this.root.querySelector<HTMLVideoElement>('.player__video')
     if (!videoElement) throw new Error('Video element not found')
 
@@ -622,28 +656,26 @@ export class VideoPlayer
   /**
    * Enhanced PiP support detection
    */
-  private checkPictureInPictureSupport(): { supported: boolean; reason?: string }
-  {
+  checkPictureInPictureSupport(): { supported: boolean; reason?: string } {
     if (!('pictureInPictureEnabled' in document)) {
-      return { supported: false, reason: 'API not available' }
+      return {supported: false, reason: 'API not available'}
     }
     if (!document.pictureInPictureEnabled) {
-      return { supported: false, reason: 'PiP disabled by browser or policy' }
+      return {supported: false, reason: 'PiP disabled by browser or policy'}
     }
 
     const video = this.root.querySelector('.player__video') as HTMLVideoElement
     if (video && video.disablePictureInPicture) {
-      return { supported: false, reason: 'Video element has PiP disabled' }
+      return {supported: false, reason: 'Video element has PiP disabled'}
     }
 
-    return { supported: true }
+    return {supported: true}
   }
 
   /**
    * Bind event listeners
    */
-  private bindEventListeners(): void
-  {
+  bindEventListeners(): void {
     this.adjustPanelsToViewport = this.adjustPanelsToViewport.bind(this)
     this.adjustVolumeOrientation = this.adjustVolumeOrientation.bind(this)
     this.handleResize = this.handleResize.bind(this)
@@ -789,8 +821,7 @@ export class VideoPlayer
   /**
    * Bind keyboard event listeners
    */
-  private bindKeyboardEvents(): void
-  {
+  bindKeyboardEvents(): void {
     this.root.addEventListener('keydown', (event) => {
       if (!this.isPlayerActive()) return
       this.resetInterfaceTimeout()
@@ -828,26 +859,22 @@ export class VideoPlayer
     })
   }
 
-  private initializePiPListeners(): void
-  {
+  initializePiPListeners(): void {
     const video = this.root.querySelector<HTMLElement>('.player__video')
 
     video?.addEventListener('enterpictureinpicture', this.handleEnterPiP.bind(this))
     video?.addEventListener('leavepictureinpicture', this.handleLeavePiP.bind(this))
   }
 
-  private handleEnterPiP(): void
-  {
+  handleEnterPiP(): void {
     this.playerElement.classList.add('player--pip-active')
   }
 
-  private handleLeavePiP(): void
-  {
+  handleLeavePiP(): void {
     this.playerElement.classList.remove('player--pip-active')
   }
 
-  private resetInterfaceTimeout(): void
-  {
+  resetInterfaceTimeout(): void {
     if (!this.config.showControls) return
 
     this.showInterface()
@@ -865,8 +892,7 @@ export class VideoPlayer
   /**
    * Initialize auto-hide interface
    */
-  private initInterfaceAutoHide(): void
-  {
+  initInterfaceAutoHide(): void {
     this.playerElement.addEventListener('mousemove', () => {
       this.resetInterfaceTimeout()
     })
@@ -874,13 +900,11 @@ export class VideoPlayer
 
   // Event Handlers
 
-  private handleResize(): void
-  {
+  handleResize(): void {
     this.resizeHandlers.forEach(handler => handler())
   }
 
-  private updateSourceNavigationVisibility(): void
-  {
+  updateSourceNavigationVisibility(): void {
     const hasMultipleSources = this.sources.length > 1
     const showPrev = hasMultipleSources && (this.config.prevButton ?? true)
     const showNext = hasMultipleSources && (this.config.nextButton ?? true)
@@ -893,8 +917,7 @@ export class VideoPlayer
     }
   }
 
-  private handleTimeUpdate(currentTime: number, duration: number): void
-  {
+  handleTimeUpdate(currentTime: number, duration: number): void {
     this.timelineController.updateProgress(currentTime, duration)
     if (this.timeDisplay) {
       this.timeDisplay.update(currentTime, duration)
@@ -911,15 +934,13 @@ export class VideoPlayer
     this.events.emit('timeupdate', eventData)
   }
 
-  private handleVolumeChange(volume: number, muted: boolean): void
-  {
+  handleVolumeChange(volume: number, muted: boolean): void {
     this.volumeController.setVolume(volume)
     this.volumeController.updateIcon(volume, muted)
-    this.events.emit('volumechange', { volume, muted })
+    this.events.emit('volumechange', {volume, muted})
   }
 
-  private handlePlay(): void
-  {
+  handlePlay(): void {
     if (this.playPauseButton) {
       this.playPauseButton.setPaused(false)
     }
@@ -935,8 +956,7 @@ export class VideoPlayer
     this.events.emit('play', undefined)
   }
 
-  private handlePause(): void
-  {
+  handlePause(): void {
     if (this.playPauseButton) {
       this.playPauseButton.setPaused(true)
     }
@@ -952,8 +972,7 @@ export class VideoPlayer
     this.events.emit('pause', undefined)
   }
 
-  private handleEnded(): void
-  {
+  handleEnded(): void {
     if (this.loopMode === 'all') {
       if (this.sources.length <= 1) return
 
@@ -966,8 +985,7 @@ export class VideoPlayer
     }
   }
 
-  private handleLoadedMetadata(): void
-  {
+  handleLoadedMetadata(): void {
     const duration = this.videoController.getDuration()
     this.timelineController.setDuration(duration)
 
@@ -978,15 +996,13 @@ export class VideoPlayer
     this.events.emit('loadedmetadata', undefined)
   }
 
-  private handleError(error: Error): void
-  {
+  handleError(error: Error): void {
     if (this.logging) console.error('Video error:', error)
 
     this.events.emit('error', error)
   }
 
-  private handleFullscreenChange(isFullscreen: boolean): void
-  {
+  handleFullscreenChange(isFullscreen: boolean): void {
     if (this.fullscreenButton) {
       this.fullscreenButton.setFullscreen(isFullscreen)
     }
@@ -998,8 +1014,7 @@ export class VideoPlayer
     this.events.emit('fullscreenchange', isFullscreen)
   }
 
-  private adjustSourceNavigationPosition(): void
-  {
+  adjustSourceNavigationPosition(): void {
     if (!this.playerElement) return
 
     const isFullscreen = this.playerElement.classList.contains('player--fullscreen')
@@ -1015,8 +1030,7 @@ export class VideoPlayer
   /**
    * Apply current loop mode settings
    */
-  private applyLoopMode(): void
-  {
+  applyLoopMode(): void {
     if (!this.videoController) return
     this.videoController.setLoop(this.loopMode === 'one')
   }
@@ -1024,8 +1038,7 @@ export class VideoPlayer
   /**
    * Update loop button appearance based on current mode
    */
-  private updateLoopButton(): void
-  {
+  updateLoopButton(): void {
     if (this.loopButton) {
       this.loopButton.setMode(this.loopMode)
     }
@@ -1036,8 +1049,7 @@ export class VideoPlayer
   /**
    * Show specific control button
    */
-  showControl(control: keyof ControlsVisibility): void
-  {
+  showControl(control: keyof ControlsVisibility): void {
     this.controlsVisibility[control] = true
     this.applyIndividualControlsVisibility()
   }
@@ -1045,8 +1057,7 @@ export class VideoPlayer
   /**
    * Hide specific control button
    */
-  hideControl(control: keyof ControlsVisibility): void
-  {
+  hideControl(control: keyof ControlsVisibility): void {
     this.controlsVisibility[control] = false
     this.applyIndividualControlsVisibility()
   }
@@ -1054,8 +1065,7 @@ export class VideoPlayer
   /**
    * Toggle specific control button visibility
    */
-  toggleControl(control: keyof ControlsVisibility): void
-  {
+  toggleControl(control: keyof ControlsVisibility): void {
     this.controlsVisibility[control] = !this.controlsVisibility[control]
     this.applyIndividualControlsVisibility()
   }
@@ -1063,25 +1073,22 @@ export class VideoPlayer
   /**
    * Get control visibility state
    */
-  getControlVisibility(control: keyof ControlsVisibility): boolean
-  {
+  getControlVisibility(control: keyof ControlsVisibility): boolean {
     return this.controlsVisibility[control]
   }
 
   /**
    * Update multiple controls visibility at once
    */
-  setControlsVisibility(visibility: Partial<ControlsVisibility>): void
-  {
-    this.controlsVisibility = { ...this.controlsVisibility, ...visibility }
+  setControlsVisibility(visibility: Partial<ControlsVisibility>): void {
+    this.controlsVisibility = {...this.controlsVisibility, ...visibility}
     this.applyIndividualControlsVisibility()
   }
 
   /**
    * Set video sources array
    */
-  setSources(sources: (string | Partial<VideoSource>)[] = []): void
-  {
+  setSources(sources: (string | Partial<VideoSource>)[] = []): void {
     this.sources = this.normalizeSources(sources)
     this.currentSourceIndex = 0
     this.updateSourceNavigationVisibility()
@@ -1091,8 +1098,7 @@ export class VideoPlayer
   /**
    * Add source to the sources array
    */
-  addSource(source: Partial<VideoSource>): void
-  {
+  addSource(source: Partial<VideoSource>): void {
     const normalizedSource = this.normalizeSources([source])[0]
 
     if (!this.sources.some(s => s.url === normalizedSource.url)) {
@@ -1107,32 +1113,28 @@ export class VideoPlayer
   /**
    * Get all available sources
    */
-  getSources(): VideoSource[]
-  {
+  getSources(): VideoSource[] {
     return [...this.sources]
   }
 
   /**
    * Get current source URL
    */
-  getCurrentSource(): VideoSource | undefined
-  {
+  getCurrentSource(): VideoSource | undefined {
     return this.sources[this.currentSourceIndex]
   }
 
   /**
    * Get current source index
    */
-  getCurrentSourceIndex(): number
-  {
+  getCurrentSourceIndex(): number {
     return this.currentSourceIndex
   }
 
   /**
    * Switch to next source in the array
    */
-  async nextSource(): Promise<void>
-  {
+  async nextSource(): Promise<void> {
     if (this.sources.length <= 1) return
     const nextIndex = (this.currentSourceIndex + 1) % this.sources.length
     await this.loadSourceByIndex(nextIndex)
@@ -1141,8 +1143,7 @@ export class VideoPlayer
   /**
    * Switch to previous source in the array
    */
-  async previousSource(): Promise<void>
-  {
+  async previousSource(): Promise<void> {
     if (this.sources.length <= 1) return
     const prevIndex = (this.currentSourceIndex - 1 + this.sources.length) % this.sources.length
     await this.loadSourceByIndex(prevIndex)
@@ -1151,16 +1152,14 @@ export class VideoPlayer
   /**
    * Switch to specific source by index
    */
-  async switchToSource(index: number): Promise<void>
-  {
+  async switchToSource(index: number): Promise<void> {
     await this.loadSourceByIndex(index)
   }
 
   /**
    * Switch to specific source by URL
    */
-  async switchToSourceByUrl(url: string): Promise<void>
-  {
+  async switchToSourceByUrl(url: string): Promise<void> {
     const index = this.sources.findIndex(s => s.url === url)
     if (index === -1) {
       throw new Error('Source URL not found in sources array')
@@ -1172,8 +1171,7 @@ export class VideoPlayer
   /**
    * Set string source (compatibility with old API)
    */
-  setSource(src: string, muted: boolean = false): void
-  {
+  setSource(src: string, muted: boolean = false): void {
     this.setSources([src])
     this.videoController.setSource(src)
 
@@ -1186,8 +1184,7 @@ export class VideoPlayer
    * Load a video from file (opens system dialog)
    * Adds the selected file to the current sources.
    */
-  async loadVideoFile(): Promise<void>
-  {
+  async loadVideoFile(): Promise<void> {
     await this.videoController.loadVideoFile()
   }
 
@@ -1195,60 +1192,53 @@ export class VideoPlayer
    * Load a video from server URL with fetch
    * Adds the URL to sources array
    */
-  async loadVideoFromUrl(url: string): Promise<void>
-  {
+  async loadVideoFromUrl(url: string): Promise<void> {
     await this.videoController.loadVideoFromUrl(url)
 
     if (!this.sources.some(s => s.url === url)) {
-      this.addSource({ url })
+      this.addSource({url})
     }
   }
 
   /**
    * Play the video
    */
-  async play(): Promise<void>
-  {
+  async play(): Promise<void> {
     await this.videoController.play()
   }
 
   /**
    * Pause the video
    */
-  pause(): void
-  {
+  pause(): void {
     this.videoController.pause()
   }
 
   /**
    * Toggle play/pause
    */
-  async togglePlay(): Promise<void>
-  {
+  async togglePlay(): Promise<void> {
     await this.videoController.togglePlay()
   }
 
   /**
    * Toggle fullscreen
    */
-  async toggleFullscreen(): Promise<void>
-  {
+  async toggleFullscreen(): Promise<void> {
     await this.fullscreenController.toggle()
   }
 
   /**
    * Check if Picture-in-Picture is supported
    */
-  private isPictureInPictureSupported(): boolean
-  {
+  isPictureInPictureSupported(): boolean {
     return 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled !== undefined
   }
 
   /**
    * Toggle picture in picture
    */
-  async togglePictureInPicture(): Promise<void>
-  {
+  async togglePictureInPicture(): Promise<void> {
     const video = this.root.querySelector<HTMLVideoElement>('.player__video')
     if (!video?.src || video.readyState < HTMLMediaElement.HAVE_METADATA) {
       console.warn('Video not loaded. Cannot activate Picture-in-Picture.')
@@ -1265,8 +1255,7 @@ export class VideoPlayer
   /**
    * Show controls
    */
-  showControls(): void
-  {
+  showControls(): void {
     if (!this.config.showControls) return
 
     this.isShowControls = true
@@ -1278,8 +1267,7 @@ export class VideoPlayer
   /**
    * Hide controls
    */
-  hideControls(): void
-  {
+  hideControls(): void {
     if (!this.config.showControls) return
 
     this.isShowControls = false
@@ -1293,32 +1281,28 @@ export class VideoPlayer
   /**
    * Toggle controls visibility
    */
-  toggleControls(): void
-  {
+  toggleControls(): void {
     this.isShowControls ? this.hideControls() : this.showControls()
   }
 
   /**
    * Check if controls are visible
    */
-  getControlsVisible(): boolean
-  {
+  getControlsVisible(): boolean {
     return this.isShowControls
   }
 
   /**
    * Set video volume (0-1)
    */
-  setVolume(volume: number): void
-  {
+  setVolume(volume: number): void {
     this.videoController.setVolume(volume)
   }
 
   /**
    * Set muted state
    */
-  setMuted(muted: boolean): void
-  {
+  setMuted(muted: boolean): void {
     this.videoController!.setMuted(muted)
     this.volumeController.updateIcon(this.videoController.getVolume(), muted)
   }
@@ -1326,32 +1310,28 @@ export class VideoPlayer
   /**
    * Set playback rate
    */
-  setPlaybackRate(rate: number): void
-  {
+  setPlaybackRate(rate: number): void {
     this.videoController.setPlaybackRate(rate)
   }
 
   /**
    * Get loop state (for backward compatibility)
    */
-  getLoop(): boolean
-  {
+  getLoop(): boolean {
     return ['one', 'all'].includes(this.loopMode)
   }
 
   /**
    * Set loop state (for backward compatibility)
    */
-  setLoop(loop: boolean): void
-  {
+  setLoop(loop: boolean): void {
     this.setLoopMode(loop ? 'one' : 'none')
   }
 
   /**
    * Toggle loop mode between: none -> one -> all -> none
    */
-  toggleLoop(): void
-  {
+  toggleLoop(): void {
     const modes: LoopMode[] = ['none', 'one', 'all']
     const currentIndex = modes.indexOf(this.loopMode)
 
@@ -1365,16 +1345,14 @@ export class VideoPlayer
   /**
    * Get current loop mode
    */
-  getLoopMode(): LoopMode
-  {
+  getLoopMode(): LoopMode {
     return this.loopMode
   }
 
   /**
    * Set specific loop mode
    */
-  setLoopMode(mode: LoopMode): void
-  {
+  setLoopMode(mode: LoopMode): void {
     this.loopMode = mode
     this.applyLoopMode()
     this.updateLoopButton()
@@ -1384,102 +1362,86 @@ export class VideoPlayer
   /**
    * Skip time in seconds
    */
-  skip(seconds: number): void
-  {
+  skip(seconds: number): void {
     this.videoController.skip(seconds)
   }
 
   /**
    * Seek to specific time
    */
-  seekTo(time: number): void
-  {
+  seekTo(time: number): void {
     this.videoController.setCurrentTime(time)
   }
 
   // Getters
 
-  getCurrentTime(): number
-  {
+  getCurrentTime(): number {
     return this.videoController.getCurrentTime()
   }
 
-  getDuration(): number
-  {
+  getDuration(): number {
     return this.videoController.getDuration()
   }
 
-  getVolume(): number
-  {
+  getVolume(): number {
     return this.videoController.getVolume()
   }
 
-  getIsPlaying(): boolean
-  {
+  getIsPlaying(): boolean {
     return this.videoController.getIsPlaying()
   }
 
-  getIsMuted(): boolean
-  {
+  getIsMuted(): boolean {
     return this.videoController.getMuted()
   }
 
-  getPlaybackRate(): number
-  {
+  getPlaybackRate(): number {
     return this.videoController.getPlaybackRate()
   }
 
   // Event System
 
-  on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void
-  {
+  on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void {
     this.events.on(event, callback)
   }
 
-  off<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void
-  {
+  off<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void {
     this.events.off(event, callback)
   }
 
   // Utility Methods
 
-  private showInterface(): void
-  {
+  showInterface(): void {
     if (!this.config.showControls) return
     this.playerElement.classList.remove('player--hide-interface')
   }
 
-  private hideInterface(): void
-  {
+  hideInterface(): void {
     if (this.videoController.getIsPlaying()) {
       this.playerElement.classList.add('player--hide-interface')
     }
   }
 
-  private isPlayerActive(): boolean
-  {
+  isPlayerActive(): boolean {
     return this.playerElement.contains((this.root as Document).activeElement) ||
       this.videoController.getIsPlaying() ||
       (this.root as Document).fullscreenElement === this.playerElement
   }
 
-  private updatePlaylist(): void
-  {
+  updatePlaylist(): void {
     if (this.playlistPanel) {
       this.playlistPanel.sources = this.sources.map(source => source.title)
       this.playlistPanel.activeIndex = this.currentSourceIndex
     }
   }
 
-  private togglePlaylist(): void
-  {
+  togglePlaylist(): void {
     if (this.playlistPanel) {
       this.playlistPanel.toggleAttribute('visible')
     }
   }
 
-  private async handleFileLoaded(file: File, url: string): Promise<void>
-  {
+  async handleFileLoaded(file: File, url: string): Promise<void> {
     try {
       const existingSource = this.sources.find(s => s.url === url)
       let title = existingSource?.title
@@ -1489,7 +1451,7 @@ export class VideoPlayer
         title = metadata.title || file.name
       }
 
-      const newSource: VideoSource = { ...existingSource, title, url, file }
+      const newSource: VideoSource = {...existingSource, title, url, file}
       const existingSourceIndex = this.sources.findIndex(s => s.url === url)
 
       if (existingSourceIndex !== -1) {
@@ -1510,13 +1472,12 @@ export class VideoPlayer
     } catch (error) {
       console.error('Error processing loaded file:', error)
       if (!this.sources.some(s => s.url === url)) {
-        this.addSource({ url, title: file.name, file })
+        this.addSource({url, title: file.name, file})
       }
     }
   }
 
-  private async togglePreviewPanel(): Promise<void>
-  {
+  async togglePreviewPanel(): Promise<void> {
     if (this.sources.length === 0) return
 
     const isVisible = this.previewPanel.hasAttribute('visible')
@@ -1528,8 +1489,7 @@ export class VideoPlayer
     }
   }
 
-  private async generateAndShowPreview(): Promise<void>
-  {
+  async generateAndShowPreview(): Promise<void> {
     if (this.sources.length === 0 || !this.previewPanel) return
 
     const videoElement = this.videoController.getVideoElement()
@@ -1562,8 +1522,7 @@ export class VideoPlayer
     }
   }
 
-  private showSourceTitle(): void
-  {
+  showSourceTitle(): void {
     if (!this.sourceTitleElement) return
 
     const currentSource = this.getCurrentSource()
@@ -1579,8 +1538,7 @@ export class VideoPlayer
     }, 4000)
   }
 
-  private initializeDraggablePanels()
-  {
+  initializeDraggablePanels() {
     this.draggablePanels = [this.playlistPanel, this.previewPanel]
     this.draggablePanels.forEach(panel => {
       if (panel) {
@@ -1590,8 +1548,7 @@ export class VideoPlayer
     })
   }
 
-  private handlePanelFocus(panelId: string)
-  {
+  handlePanelFocus(panelId: string) {
     this.zIndex.sort(panelId)
     this.draggablePanels.forEach(panel => {
       if (panel) {
@@ -1600,8 +1557,7 @@ export class VideoPlayer
     })
   }
 
-  private adjustPanelsToViewport()
-  {
+  adjustPanelsToViewport() {
     this.draggablePanels.forEach(panel => {
       if (panel.style.display === 'none' || !panel.style.left) return
 
@@ -1628,8 +1584,7 @@ export class VideoPlayer
     })
   }
 
-  private adjustVolumeOrientation(): void
-  {
+  adjustVolumeOrientation(): void {
     if (!this.volumeControl || !this.controlsVisibility.showVolume) return
 
     const panel = this.root.querySelector('.player__panel')
@@ -1666,8 +1621,7 @@ export class VideoPlayer
   /**
    * Destroy the video player and clean up resources
    */
-  destroy(): void
-  {
+  destroy(): void {
     window.removeEventListener('resize', this.handleResize)
 
     this.videoController.destroy()
