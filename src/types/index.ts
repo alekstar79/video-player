@@ -203,6 +203,9 @@ export interface VideoPlayerInterface {
   sourceNextButton: HTMLElement
   loopMode: LoopMode;
   logging: boolean;
+  context?: any;
+
+  [p: string]: any;
 
   normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[];
 
@@ -214,7 +217,6 @@ export interface VideoPlayerInterface {
   applyContainerSizes(): void;
   awaitLayout(selector: string, ms: number): Promise<void>;
   applyAspectRatio(ratio: string): void;
-
   applyIndividualControlsVisibility(): void;
 
   loadInitialSources(): Promise<void>;
@@ -229,6 +231,7 @@ export interface VideoPlayerInterface {
 
   showAllControls(): void;
 
+  initializePiPListeners(): void;
   initializeDraggablePanels(): void;
   initializeControllers(): void;
   initInterfaceAutoHide(): void;
@@ -239,32 +242,21 @@ export interface VideoPlayerInterface {
 
   bindKeyboardEvents(): void;
 
-  initializePiPListeners(): void;
-
-
-  handleEnterPiP(): void;
-  handleLeavePiP(): void;
-
   resetInterfaceTimeout(): void;
-
-  handleResize(): void;
 
   updateSourceNavigationVisibility(): void;
 
+  handleLoadedMetadata(): void;
+  handleError(error: Error): void;
+  handleFullscreenChange(isFullscreen: boolean): void;
   handleTimeUpdate(currentTime: number, duration: number): void;
-
   handleVolumeChange(volume: number, muted: boolean): void;
-
+  handleResize(): void;
+  handleEnterPiP(): void;
+  handleLeavePiP(): void;
   handlePlay(): void;
   handlePause(): void;
-
   handleEnded(): void;
-
-  handleLoadedMetadata(): void;
-
-  handleError(error: Error): void;
-
-  handleFullscreenChange(isFullscreen: boolean): void;
 
   adjustSourceNavigationPosition(): void;
 
@@ -286,11 +278,10 @@ export interface VideoPlayerInterface {
   previousSource(): Promise<void>;
 
   setControlsVisibility(visibility: Partial<ControlsVisibility>): void;
+  setSource(src: string, muted: boolean): void;
 
   switchToSource(index: number): Promise<void>;
   switchToSourceByUrl(url: string): Promise<void>;
-
-  setSource(src: string, muted: boolean): void;
 
   loadVideoFile(): Promise<void>;
   loadVideoFromUrl(url: string): Promise<void>;
@@ -308,32 +299,26 @@ export interface VideoPlayerInterface {
   hideControls(): void;
   toggleControls(): void;
 
-  getControlsVisible(): boolean;
-
   setVolume(volume: number): void;
   setMuted(muted: boolean): void;
-
   setPlaybackRate(rate: number): void;
 
-  getLoop(): boolean;
   setLoop(loop: boolean): void;
+  getLoop(): boolean;
 
-  toggleLoop(): void;
-  getLoopMode(): LoopMode;
   setLoopMode(mode: LoopMode): void;
+  getLoopMode(): LoopMode;
+  toggleLoop(): void;
 
   skip(seconds: number): void;
   seekTo(time: number): void;
 
+  getControlsVisible(): boolean;
   getCurrentTime(): number;
-
   getDuration(): number;
-
   getVolume(): number;
   getIsMuted(): boolean;
-
   getIsPlaying(): boolean;
-
   getPlaybackRate(): number;
 
   on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K] | undefined) => void): void;

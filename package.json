@@ -1,5 +1,5 @@
 {
-  "name": "video-player-ts",
+  "name": "@alekstar79/video-player-ts",
   "version": "1.0.1",
   "type": "module",
   "description": "Video player built with TypeScript and Vite",

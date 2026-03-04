@@ -1,4 +1,4 @@
-import type { ISector } from '@alekstar79/context-menu'
+import type { ISector, Manager } from '@alekstar79/context-menu'
 
 import type {
   ControlsVisibility,
@@ -44,13 +44,15 @@ import { whenDefined } from '@/modules/ui/web-components'
 export class VideoPlayer implements VideoPlayerInterface {
   events: EventEmitter<PlayerEventMap>
   playerElement!: HTMLElement
-
-  readonly root: Document | ShadowRoot
-  readonly container: HTMLElement
+  context?: Manager
 
   config: VideoPlayerConfig
   controlsVisibility: Required<ControlsVisibility>
   isShowControls: boolean
+
+  readonly root: Document | ShadowRoot
+  readonly container: HTMLElement
+  readonly resizeHandlers: Map<string, () => void> = new Map()
 
   // Core Components
   videoController!: VideoController
@@ -76,7 +78,6 @@ export class VideoPlayer implements VideoPlayerInterface {
   // Z-Index & Resize
   zIndex: ZIndexInterface
   draggablePanels: HTMLElement[] = []
-  readonly resizeHandlers: Map<string, () => void> = new Map()
 
   // State
   sources: VideoSource[] = []
@@ -88,7 +89,7 @@ export class VideoPlayer implements VideoPlayerInterface {
   sourcePrevButton!: HTMLElement
   sourceNextButton!: HTMLElement
 
-  loopMode: LoopMode = 'none'
+  loopMode: LoopMode = 'all'
 
   logging: boolean = false
 
@@ -141,7 +142,6 @@ export class VideoPlayer implements VideoPlayerInterface {
       switch (command) {
         case 'pause':
         case 'play':
-          console.log(this)
           await this.togglePlay()
           break
         case 'forward':

@@ -101,6 +101,8 @@ export const createContextMenu = async (vp: VideoPlayer | PromiseLike<VideoPlaye
     .addEventListener('contextmenu', e => {
       e.preventDefault()
       manager.show(e)
+
+      console.log('onContext', player, manager)
     })
 }
 
