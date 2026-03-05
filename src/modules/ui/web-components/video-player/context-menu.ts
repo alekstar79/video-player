@@ -82,27 +82,23 @@ export const createContextMenu = async (vp: VideoPlayer | PromiseLike<VideoPlaye
   manager.menu.updateButtons()
 
   manager.on('click', (data: ISector) => {
-    if (data.icon === 'play' || data.icon === 'pause') {
-      // console.log('click', manager.menu.config.centralButton, manager.menu.config.sectors, data)
-
-      manager.menu.config.centralButton = {
-        icon: data.icon === 'play' ? 'pause' : 'play',
-        hint: data.icon === 'play' ? 'Pause' : 'Play'
-      }
-
-      manager.menu.updateButtons()
-      manager.menu.hide()
-    }
-
     player.events.emit('context', data)
+  })
+
+  player.on('play', () => {
+    manager.menu.config.centralButton = { icon: 'pause', hint: 'Pause' }
+    manager.menu.updateButtons()
+  })
+
+  player.on('pause', () => {
+    manager.menu.config.centralButton = { icon: 'play', hint: 'Play' }
+    manager.menu.updateButtons()
   })
 
   player.playerElement
     .addEventListener('contextmenu', e => {
       e.preventDefault()
       manager.show(e)
-
-      console.log('onContext', player, manager)
     })
 }
 

@@ -6,7 +6,7 @@ export const defaultConfig: Partial<VideoPlayerConfig> = {
   initialSources: [],
   maxWidth: '960px',
   aspectRatio: '16:9',
-  loopMode: 'none',
+  loopMode: 'all',
   initialVolume: 0.7,
   playbackRate: 1.0,
   autoPlay: false,

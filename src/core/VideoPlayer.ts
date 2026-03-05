@@ -89,7 +89,7 @@ export class VideoPlayer implements VideoPlayerInterface {
   sourcePrevButton!: HTMLElement
   sourceNextButton!: HTMLElement
 
-  loopMode: LoopMode = 'all'
+  loopMode: LoopMode = 'none'
 
   logging: boolean = false
 
