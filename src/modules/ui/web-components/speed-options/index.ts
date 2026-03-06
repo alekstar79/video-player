@@ -1,10 +1,12 @@
 import { BaseComponent } from '../BaseComponent'
+import { IconHelper } from '@/core/utils'
 
 import template from './template.html?raw'
 import styles from './style.scss?inline'
 
 export default class SpeedOptionsComponent extends BaseComponent
 {
+  private readonly iconContainer: HTMLElement
   private speedButton: HTMLElement
   private speedOptions: HTMLElement
 
@@ -15,6 +17,7 @@ export default class SpeedOptionsComponent extends BaseComponent
 
     this.speedButton = this.shadow.querySelector('.j-speed')!
     this.speedOptions = this.shadow.querySelector('.j-speed-options')!
+    this.iconContainer = this.shadow.querySelector('.icon-container')!
 
     this.speedButton.addEventListener('click', () => {
       this.speedOptions.classList.toggle('show')
@@ -28,6 +31,13 @@ export default class SpeedOptionsComponent extends BaseComponent
         this.emit('speedchange', { speed })
         this.speedOptions.classList.remove('show')
       }
+    })
+  }
+
+  connectedCallback()
+  {
+    IconHelper.loadIcons().then(() => {
+      IconHelper.insertIcon(this.iconContainer, 'slow-motion')
     })
   }
 

@@ -12,3 +12,16 @@
   padding: 0;
   background: none;
 }
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.icon-container svg {
+  width: 1.3em;
+  height: 1.3em;
+  fill: currentColor;
+}

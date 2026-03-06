@@ -1,10 +1,4 @@
-const externalStyleLinks = [
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/icon?family=Material+Icons',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200'
-]
-
-import { IconHelper } from './IconHelper'
+import { IconHelper } from '@/core/utils'
 
 export abstract class BaseComponent extends HTMLElement
 {
@@ -18,14 +12,6 @@ export abstract class BaseComponent extends HTMLElement
 
   protected render(template: string, styles?: string): void
   {
-    // Add external icon libraries
-    externalStyleLinks.forEach(href => {
-      const link = document.createElement('link')
-      link.rel = 'stylesheet'
-      link.href = href
-      this.shadow.appendChild(link)
-    })
-
     // Preload icons before rendering
     IconHelper.loadIcons().catch(() => {
       console.warn('Failed to load icons, component will use fallback')

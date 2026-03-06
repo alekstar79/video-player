@@ -1,12 +1,13 @@
 import { BaseComponent } from '../BaseComponent'
+import { IconHelper } from '@/core/utils'
 
 import template from './template.html?raw'
 import styles from './style.scss?inline'
 
 export default class SkipButtonComponent extends BaseComponent
 {
+  private readonly iconContainer: HTMLElement
   private button: HTMLElement
-  private icon: HTMLElement
 
   static get observedAttributes()
   {
@@ -17,8 +18,8 @@ export default class SkipButtonComponent extends BaseComponent
   {
     super()
     this.render(template, styles)
+    this.iconContainer = this.getElement('.icon-container')!
     this.button = this.getElement('button')!
-    this.icon = this.getElement('.fas')!
 
     this.button.addEventListener('click', () => {
       const direction = this.getAttribute('direction') === 'forward' ? 1 : -1
@@ -30,12 +31,18 @@ export default class SkipButtonComponent extends BaseComponent
   attributeChangedCallback(name: string, _oldValue: string, newValue: string)
   {
     if (name === 'direction') {
-      this.icon.classList.toggle('fa-backward', newValue === 'backward')
-      this.icon.classList.toggle('fa-forward', newValue === 'forward')
+      this.updateIcon(newValue)
       this.button.title = `Skip ${newValue}`
     }
     if (name === 'seconds') {
       this.button.title = `Skip ${this.getAttribute('direction')}`
     }
+  }
+
+  public updateIcon(iconId: string): void
+  {
+    IconHelper.loadIcons().then(() => {
+      IconHelper.insertIcon(this.iconContainer, iconId)
+    })
   }
 }

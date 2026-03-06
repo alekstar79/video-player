@@ -9,7 +9,8 @@ export class IconHelper {
     if (this.iconsLoaded) return
 
     try {
-      const response = await fetch('/icons.svg')
+      const base = import.meta.env.BASE_URL || '/'
+      const response = await fetch(`${base}icons.svg`)
       const svgText = await response.text()
       const parser = new DOMParser()
       const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
@@ -23,6 +24,7 @@ export class IconHelper {
           if (id) {
             // Create SVG element with the path
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+            svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
             svg.setAttribute('viewBox', '0 0 48 48')
             svg.setAttribute('fill', 'currentColor')
             svg.innerHTML = group.innerHTML

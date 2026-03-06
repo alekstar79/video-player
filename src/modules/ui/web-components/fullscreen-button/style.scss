@@ -8,3 +8,34 @@
   padding: 0;
   background: none;
 }
+
+.j-fullscreen {
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 1 !important;
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+
+    &:hover {
+      transform: none !important;
+    }
+  }
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.icon-container svg {
+  width: 1.3em;
+  height: 1.3em;
+  fill: currentColor;
+}

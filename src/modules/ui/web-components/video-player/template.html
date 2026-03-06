@@ -1,42 +1,33 @@
 <div class="player">
-  <!-- Message for when no files are available -->
   <div class="player__no-files-message">No video files to play</div>
-
-  <!-- Source Title Display -->
   <div class="player__source-title"></div>
 
-  <!-- Main playback status icons (play/pause) -->
-  <em class="fas fa-pause player__main-icon j-pause"></em>
-  <em class="fas fa-play player__main-icon j-play"></em>
+  <span class="player__main-icon j-pause"><span class="icon-container"></span></span>
+  <span class="player__main-icon j-play"><span class="icon-container"></span></span>
 
-  <!-- The Video Element -->
   <video class="player__video"></video>
 
-  <!-- Source Navigation Buttons -->
   <button
     class="player__source-nav player__source-nav--prev j-source-prev"
     title="Previous source"
   >
-    <em class="fas fa-chevron-left fa-lg"></em>
+    <span class="icon-container"></span>
   </button>
   <button
     class="player__source-nav player__source-nav--next j-source-next"
     title="Next source"
   >
-    <em class="fas fa-chevron-right fa-lg"></em>
+    <span class="icon-container"></span>
   </button>
 
-  <!-- Top Panel -->
   <div class="player__top-panel">
     <preview-button></preview-button>
     <playlist-button></playlist-button>
   </div>
 
-  <!-- Bottom Panel -->
   <div class="player__panel">
     <timeline-control class="j-line"></timeline-control>
 
-    <!-- Left Controls -->
     <div class="player__panel-block">
       <skip-button class="j-skip-backward" direction="backward" title="Skip backward"></skip-button>
       <open-file-button class="j-open-file"></open-file-button>
@@ -47,7 +38,6 @@
       <time-display class="j-duration"></time-display>
     </div>
 
-    <!-- Right Controls -->
     <div class="player__panel-block">
       <speed-options class="j-speed"></speed-options>
       <pip-button class="j-pic-in-pic"></pip-button>
@@ -55,7 +45,6 @@
     </div>
   </div>
 
-  <!-- Draggable Panels -->
   <playlist-panel></playlist-panel>
   <preview-panel></preview-panel>
 </div>

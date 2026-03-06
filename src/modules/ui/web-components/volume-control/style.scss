@@ -1,6 +1,7 @@
 :host {
   display: flex;
   align-items: center;
+  color: inherit;
 }
 
 .player__panel-button {
@@ -110,4 +111,17 @@
   border-radius: 50%;
   transition: all 0.15s ease-in-out;
   pointer-events: none; // Prevents jitter on hover
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+}
+
+.icon-container svg {
+  width: 1.3em;
+  height: 1.3em;
+  fill: currentColor;
 }

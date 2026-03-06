@@ -24,11 +24,6 @@ export const config = () => defineConfig({
       hint: 'Next',
       rotate: -90
     },
-    // {
-    //   icon: 'forward',
-    //   hint: 'Forward',
-    //   rotate: -90
-    // },
     {
       icon: 'expand',
       hint: 'Fullscreen'
@@ -37,11 +32,6 @@ export const config = () => defineConfig({
       icon: 'open',
       hint: 'Open'
     },
-    // {
-    //   icon: 'backward',
-    //   hint: 'Backward',
-    //   rotate: 90
-    // },
     {
        icon: 'prev',
        hint: 'Prev',
@@ -55,11 +45,7 @@ export const config = () => defineConfig({
   ],
   centralButton: {
     icon: 'play',
-    hint: 'Play',
-    // hintSpan: 180,
-    // iconRadius: 50,
-    // iconScale: 0.75
-    // hintPosition: 'bottom'
+    hint: 'Play'
   }
 })
 
@@ -86,18 +72,19 @@ export const createContextMenu = async (vp: VideoPlayer | PromiseLike<VideoPlaye
   })
 
   player.on('play', () => {
+    manager.menu.hide()
     manager.menu.config.centralButton = { icon: 'pause', hint: 'Pause' }
-    manager.menu.updateButtons()
   })
 
   player.on('pause', () => {
+    manager.menu.hide()
     manager.menu.config.centralButton = { icon: 'play', hint: 'Play' }
-    manager.menu.updateButtons()
   })
 
   player.playerElement
     .addEventListener('contextmenu', e => {
       e.preventDefault()
+      manager.menu.updateButtons()
       manager.show(e)
     })
 }

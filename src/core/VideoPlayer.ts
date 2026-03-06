@@ -17,7 +17,7 @@ import { PlaybackController } from '@/modules/controls/PlaybackController'
 import { TimelineController } from '@/modules/controls/TimelineController'
 import { VideoController } from '@/modules/controls/VideoController'
 import { VolumeController } from '@/modules/controls/VolumeController'
-import { Helpers, zIndex } from '@/core/utils'
+import { IconHelper, Helpers, zIndex } from '@/core/utils'
 import { getMetadata } from '@/core/metadata'
 
 import type {
@@ -231,6 +231,8 @@ export class VideoPlayer implements VideoPlayerInterface {
 
     // Applying dimensions to the container
     this.applyContainerSizes()
+
+    await this.initializeIcons()
 
     // Initialize controllers
     this.initializeControllers()
@@ -651,6 +653,20 @@ export class VideoPlayer implements VideoPlayerInterface {
 
     this.updatePlaylist()
     this.initializeDraggablePanels()
+  }
+
+  private async initializeIcons(): Promise<void> {
+    await IconHelper.loadIcons()
+
+    const pauseContainer = this.root.querySelector<HTMLElement>('.j-pause .icon-container')
+    const playContainer = this.root.querySelector<HTMLElement>('.j-play .icon-container')
+    if (pauseContainer) IconHelper.insertIcon(pauseContainer, 'pause')
+    if (playContainer) IconHelper.insertIcon(playContainer, 'play')
+
+    const prevContainer = this.root.querySelector<HTMLElement>('.j-source-prev .icon-container')
+    const nextContainer = this.root.querySelector<HTMLElement>('.j-source-next .icon-container')
+    if (prevContainer) IconHelper.insertIcon(prevContainer, 'prev')
+    if (nextContainer) IconHelper.insertIcon(nextContainer, 'next')
   }
 
   /**
