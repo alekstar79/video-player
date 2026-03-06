@@ -1,8 +1,44 @@
 {
-  "name": "@alekstar79/video-player-ts",
+  "name": "@alekstar79/video-player",
+  "description": "Video player built with TypeScript and Vite",
   "version": "1.0.1",
   "type": "module",
-  "description": "Video player built with TypeScript and Vite",
+  "license": "MIT",
+  "author": "Aleksey Tarasenko <alekstar79@yandex.ru>",
+  "main": "lib/video-player.js",
+  "module": "lib/video-player.js",
+  "types": "lib/index.d.ts",
+  "homepage": "https://github.com/alekstar79/video-player.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alekstar79/video-player.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alekstar79/video-player/issues"
+  },
+  "exports": {
+    ".": {
+      "import": "./lib/video-player.js",
+      "types": "./lib/index.d.ts"
+    },
+    "./vue": {
+      "import": "./lib/video-player-vue.js",
+      "types": "./lib/vue.d.ts"
+    },
+    "./lib/styles.css": "./lib/styles.css"
+  },
+  "keywords": [
+    "typescript",
+    "video",
+    "player",
+    "vue"
+  ],
+  "files": [
+    "lib/",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -16,6 +52,6 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
-    "@alekstar79/context-menu": "^2.0.8"
+    "@alekstar79/context-menu": "^2.0.9"
   }
 }

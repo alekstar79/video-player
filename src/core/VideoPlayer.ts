@@ -138,7 +138,6 @@ export class VideoPlayer implements VideoPlayerInterface {
       .catch(console.error)
 
     this.on('context', async ({ icon: command }: ISector) => {
-
       switch (command) {
         case 'pause':
         case 'play':
@@ -150,6 +149,7 @@ export class VideoPlayer implements VideoPlayerInterface {
         case 'backward':
           this.skip(-5)
           break
+        case 'compress':
         case 'expand':
           await this.toggleFullscreen()
           break

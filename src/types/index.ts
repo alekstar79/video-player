@@ -1,3 +1,5 @@
+import type { IConfig } from '@alekstar79/context-menu'
+
 import { EventEmitter } from '@/core/events/EventEmitter'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
 import { PlaybackController } from '@/modules/controls/PlaybackController'
@@ -45,6 +47,7 @@ export interface VideoPlayerConfig {
   loopMode?: LoopMode;
   muted?: boolean;
   showControls: boolean;
+  contextMenu?: boolean | IConfig;
   controlsVisibility?: ControlsVisibility;
   maxWidth?: string | number; // '100%', 1200, '1200px'
   width?: string | number;    // '100%', 800, '800px'

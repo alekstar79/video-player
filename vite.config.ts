@@ -10,22 +10,22 @@ export default defineConfig({
     }
   },
   plugins: [
-    {
-      name: 'configure-response-headers',
-      configureServer: (server) => {
-        server.middlewares.use((req, res, next) => {
-          if (req.url && /\.(mp4|webm|ogg|png|ico|svg|jpg|jpeg)$/.test(req.url)) {
-            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
-
-            if (req.url.includes('favicon')) {
-              res.setHeader('Content-Type', 'image/x-icon')
-            }
-          }
-
-          next()
-        })
-      }
-    }
+    // {
+    //   name: 'configure-response-headers',
+    //   configureServer: (server) => {
+    //     server.middlewares.use((req, res, next) => {
+    //       if (req.url && /\.(mp4|webm|ogg|png|ico|svg|jpe?g)$/.test(req.url)) {
+    //         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+    //
+    //         if (req.url.includes('favicon')) {
+    //           res.setHeader('Content-Type', 'image/x-icon')
+    //         }
+    //       }
+    //
+    //       next()
+    //     })
+    //   }
+    // }
   ],
   build: {
     outDir: 'dist',

@@ -39,7 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = ''
 
     // Create video-player instance
-    await createPlayer(container, { initialSources: videos })
+    await createPlayer(container, {
+      initialSources: videos,
+      contextMenu: true
+    })
 
   } catch (error) {
     errorHandler(error as Error)

@@ -4,9 +4,8 @@ import { BaseComponent } from '../BaseComponent'
 import { VideoPlayer } from '@/core/VideoPlayer'
 
 import template from './template.html?raw'
+import menu from '@alekstar79/context-menu/lib/styles.css?inline'
 import styles from './style.scss?inline'
-
-import { createContextMenu, styles as menu } from './context-menu'
 
 interface AttributeMap {
   [key: string]: {
@@ -37,7 +36,7 @@ export default class VideoPlayerComponent extends BaseComponent
   constructor()
   {
     super()
-    this.render(template, `${styles}\n${menu}`)
+    this.render(template, `${menu}\n${styles}`)
   }
 
   private parseAttribute(name: string, value: string | null): any
@@ -159,8 +158,7 @@ export default class VideoPlayerComponent extends BaseComponent
     }
 
     this.playerInstance = new VideoPlayer(config, this.shadow)
-    this.playerInstance.on('mounted', async () => {
-      await createContextMenu(this.playerInstance)
+    this.playerInstance.on('mounted', () => {
       resolve(this.playerInstance)
     })
 
