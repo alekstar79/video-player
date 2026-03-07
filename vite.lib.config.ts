@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
+import { resolve } from 'path'
+
 import vue from '@vitejs/plugin-vue'
 import dts from 'vite-plugin-dts'
-
-import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -13,9 +13,7 @@ export default defineConfig({
       exclude: [
         'src/__tests__',
         'src/**/*.test.ts',
-        'src/vanilla.ts',
-        'src/main.ts',
-        'src/App.vue'
+        'src/main.ts'
       ],
       entryRoot: 'src',
       copyDtsFiles: false

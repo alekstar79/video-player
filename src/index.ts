@@ -122,28 +122,37 @@ export async function createContextMenu(
 export async function createPlayer(
   container: HTMLElement,
   config: Partial<VideoPlayerConfig>
-): Promise<VideoPlayer> {
-  await whenDefined()
+): Promise<VideoPlayer | null> {
+  try {
+    await whenDefined()
 
-  const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
-  Object.assign(videoPlayer, defaultPlayerConfig, config)
-  container.appendChild(videoPlayer)
+    const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
+    Object.assign(videoPlayer, defaultPlayerConfig, config)
+    container.appendChild(videoPlayer)
 
-  const playerInstance = await videoPlayer.whenReady()
-  const contextMenu = isContextConfig(config.contextMenu)
-    ? Object.assign({}, defaultContextConfig, config.contextMenu)
-    : Boolean(config.contextMenu)
+    const playerInstance = await videoPlayer.whenReady()
+    const contextMenu = isContextConfig(config.contextMenu)
+      ? Object.assign({}, defaultContextConfig, config.contextMenu)
+      : Boolean(config.contextMenu)
 
-  if (contextMenu) {
-    await createContextMenu(
-      playerInstance,
-      typeof contextMenu === 'boolean'
-        ? defaultContextConfig
-        : contextMenu
-    )
+    console.log('createPlayer:playerInstance', videoPlayer, playerInstance)
+
+    if (contextMenu) {
+      await createContextMenu(
+        playerInstance,
+        typeof contextMenu === 'boolean'
+          ? defaultContextConfig
+          : contextMenu
+      )
+    }
+
+    return playerInstance
+
+  } catch (e) {
+    console.log(e)
   }
 
-  return playerInstance
+  return null
 }
 
 export {

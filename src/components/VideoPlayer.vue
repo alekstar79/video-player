@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, toRefs } from 'vue'
+import { onMounted, onBeforeUnmount, watch, toRefs, useTemplateRef /*, getCurrentInstance */ } from 'vue'
 
 import type { ISector } from '@alekstar79/context-menu'
 import type { VideoPlayer } from '@/core/VideoPlayer'
@@ -15,10 +15,16 @@ import type {
   LoopMode
 } from '@/types'
 
-import { createPlayer } from '@/index'
+import { registerComponents, createPlayer } from '@/index'
 
 // Define props for the component, mirroring VideoPlayerConfig
-const props = defineProps<Partial<VideoPlayerConfig>>()
+const props = withDefaults(defineProps<Partial<VideoPlayerConfig>>(), {
+  aspectRatio: '16:9',
+  maxWidth: '960px',
+  showControls: true,
+  nextButton: true,
+  prevButton: true,
+})
 
 // Define emits using the correct call-signature syntax required by Vue
 const emit = defineEmits<{
@@ -37,8 +43,46 @@ const emit = defineEmits<{
   (e: 'context', payload: ISector): void;
 }>()
 
-const playerContainerRef = ref<HTMLElement | null>(null)
+const playerContainerRef = useTemplateRef('playerContainerRef')
 let playerInstance: VideoPlayer | null = null
+
+// let playerElement: HTMLElement | null = null
+
+// function _createPlayer() {
+//   const config: IConfig = {
+//     autoBindContextMenu: props.autoBindContextMenu,
+//     sprite: props.sprite,
+//     innerRadius: props.innerRadius,
+//     outerRadius: props.outerRadius,
+//     opacity: props.opacity ?? 0.7,
+//     iconScale: props.iconScale,
+//     iconRadius: props.iconRadius,
+//     sectors: props.sectors,
+//     centralButton: props.centralButton,
+//     color: props.color,
+//     hintPadding: props.hintPadding,
+//   }
+//
+//   const tempContainer = document.createElement('div')
+//
+//   menuManager = new Manager(tempContainer, config)
+//   menuManager.on('click', (data: any) => emit('click', data))
+//   menuElement = tempContainer.firstChild as HTMLElement
+//   tempContainer.removeChild(menuElement)
+//
+//   return menuElement
+// }
+
+// function replaceRoot(newElement: HTMLElement) {
+//   const instance = getCurrentInstance()
+//   const oldEl = instance?.vnode.el
+//   const parent = oldEl?.parentNode
+//
+//   if (parent && oldEl && newElement) {
+//     parent.replaceChild(newElement, oldEl)
+//     instance.vnode.el = newElement
+//   }
+// }
 
 // Expose the player instance's API
 defineExpose({
@@ -53,25 +97,36 @@ defineExpose({
   getPlayerInstance: (): VideoPlayer | null => playerInstance
 })
 
+registerComponents()
+
 onMounted(async () => {
-  if (playerContainerRef.value) {
-    playerInstance = await createPlayer(playerContainerRef.value, { ...props })
+  try {
+    if (playerContainerRef.value) {
+      // const tempContainer = document.createElement('div')
+      playerInstance = await createPlayer(playerContainerRef.value, { ...props })
 
-    // Type-safe event forwarding with explicit payload checks
-    playerInstance.on('play', () => emit('play'))
-    playerInstance.on('pause', () => emit('pause'))
-    playerInstance.on('ended', () => emit('ended'))
-    playerInstance.on('loadedmetadata', () => emit('loadedmetadata'))
-    playerInstance.on('mounted', () => emit('mounted'))
+      // Type-safe event forwarding with explicit payload checks
+      playerInstance?.on('play', () => emit('play'))
+      playerInstance?.on('pause', () => emit('pause'))
+      playerInstance?.on('ended', () => emit('ended'))
+      playerInstance?.on('loadedmetadata', () => emit('loadedmetadata'))
+      playerInstance?.on('mounted', () => emit('mounted'))
 
-    playerInstance.on('timeupdate', (p) => { if (p) emit('timeupdate', p) })
-    playerInstance.on('volumechange', (p) => { if (p) emit('volumechange', p) })
-    playerInstance.on('playbackratechange', (p) => { if (p) emit('playbackratechange', p) })
-    playerInstance.on('fullscreenchange', (p) => { if (p !== undefined) emit('fullscreenchange', p) })
-    playerInstance.on('error', (p) => { if (p) emit('error', p) })
-    playerInstance.on('sourcechanged', (p) => { if (p !== undefined) emit('sourcechanged', p) })
-    playerInstance.on('loopmodechanged', (p) => { if (p) emit('loopmodechanged', p) })
-    playerInstance.on('context', (p) => { if (p) emit('context', p) })
+      playerInstance?.on('timeupdate', (p) => { if (p) emit('timeupdate', p) })
+      playerInstance?.on('volumechange', (p) => { if (p) emit('volumechange', p) })
+      playerInstance?.on('playbackratechange', (p) => { if (p) emit('playbackratechange', p) })
+      playerInstance?.on('fullscreenchange', (p) => { if (p !== undefined) emit('fullscreenchange', p) })
+      playerInstance?.on('error', (p) => { if (p) emit('error', p) })
+      playerInstance?.on('sourcechanged', (p) => { if (p !== undefined) emit('sourcechanged', p) })
+      playerInstance?.on('loopmodechanged', (p) => { if (p) emit('loopmodechanged', p) })
+      playerInstance?.on('context', (p) => { if (p) emit('context', p) })
+
+      // playerElement = tempContainer.firstChild as HTMLElement
+      // tempContainer.removeChild(playerElement)
+      // replaceRoot(playerElement)
+    }
+  } catch (e) {
+    console.error(e)
   }
 })
 
@@ -124,6 +179,7 @@ watch(loopMode, (newLoopMode) => {
 
 <style scoped>
 .video-player-container {
+  min-width: 960px;
   width: 100%;
 }
 </style>

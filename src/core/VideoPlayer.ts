@@ -224,6 +224,8 @@ export class VideoPlayer implements VideoPlayerInterface {
     this.noFilesMessage = this.root.querySelector('.player__no-files-message')!
     this.sourceTitleElement = this.root.querySelector('.player__source-title')!
 
+    console.log('Initializing player 1')
+
     // Applying dimensions to the container
     this.applyContainerSizes()
 
@@ -262,7 +264,10 @@ export class VideoPlayer implements VideoPlayerInterface {
     await this.initializeIcons()
 
     // Defer the initial check to ensure the layout is stable
-    await this.awaitLayout('.player__panel')
+    // await this.awaitLayout('.player__panel')
+    await new Promise(resolve => setTimeout(resolve, 900))
+
+    console.log('Initializing player 2')
 
     this.handleResize()
   }
@@ -276,9 +281,12 @@ export class VideoPlayer implements VideoPlayerInterface {
           el ??= this.root.querySelector(selector)
         }
 
+        console.log(`Layout:${selector}`, el)
+
         if (!el || el.offsetWidth <= 0) {
           requestIdleCallback(checkDimensions)
         } else {
+          console.log('Layout is stable')
           setTimeout(resolve, ms)
         }
       }
@@ -931,7 +939,7 @@ export class VideoPlayer implements VideoPlayerInterface {
   handleTimeUpdate(currentTime: number, duration: number): void {
     this.timelineController.updateProgress(currentTime, duration)
     if (this.timeDisplay) {
-      this.timeDisplay.update(currentTime, duration)
+      this.timeDisplay.update?.(currentTime, duration)
     }
 
     const eventData: TimeUpdateEvent = {
@@ -969,7 +977,7 @@ export class VideoPlayer implements VideoPlayerInterface {
 
   handlePause(): void {
     if (this.playPauseButton) {
-      this.playPauseButton.setPaused(true)
+      this.playPauseButton.setPaused?.(true)
     }
 
     const pauseIcon = this.root.querySelector<HTMLElement>('.j-pause')
@@ -1051,7 +1059,7 @@ export class VideoPlayer implements VideoPlayerInterface {
    */
   updateLoopButton(): void {
     if (this.loopButton) {
-      this.loopButton.setMode(this.loopMode)
+      this.loopButton.setMode?.(this.loopMode)
     }
   }
 

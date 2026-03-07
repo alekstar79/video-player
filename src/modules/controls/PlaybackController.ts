@@ -53,7 +53,7 @@ export class PlaybackController
     const validSpeed = this.config.speeds.includes(speed) ? speed : this.config.defaultSpeed
 
     this.onSpeedChange(validSpeed)
-    this.component.updateActiveOption(validSpeed)
+    this.component.updateActiveOption?.(validSpeed)
   }
 
   /**
