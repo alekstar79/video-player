@@ -42,16 +42,38 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "type-check": "tsc --noEmit",
     "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "test": "vitest run",
+    "test:ui": "vitest run --ui",
+    "test:coverage": "vitest run --coverage"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.13"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@types/node": "^24.9.2",
+    "@alekstar79/context-menu": "^2.0.9",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@types/node": "^25.2.3",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^28.1.0",
     "sass": "^1.97.3",
     "typescript": "^5.8.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vite-plugin-dts": "^4.5.3",
+    "vitest": "^4.0.18",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.8"
   },
-  "dependencies": {
-    "@alekstar79/context-menu": "^2.0.9"
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }

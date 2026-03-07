@@ -1,28 +1,40 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "useDefineForClassFields": true,
     "module": "ESNext",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "esModuleInterop": true,
     "isolatedModules": true,
     "noEmit": true,
     "strict": true,
+    "sourceMap": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "useDefineForClassFields": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue"
+  ],
   "exclude": [
     "node_modules",
+    "vite.lib.config.ts",
+    "vitest.config.ts",
+    "__tests__",
     "dist",
-    "__tests__"
+    "lib"
   ]
 }
