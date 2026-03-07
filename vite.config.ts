@@ -2,17 +2,24 @@ import { extname, resolve } from 'path'
 import { defineConfig } from 'vite'
 
 import vue from '@vitejs/plugin-vue'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 export default defineConfig({
-  root: '.',
-  publicDir: 'public',
+  plugins: [
+    vue(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'public/posters',
+          dest: ''
+        }
+      ]
+    })
+  ],
   resolve: {
     alias: { '@': resolve(__dirname, 'src') },
     extensions: ['.ts', '.vue']
   },
-  plugins: [
-    vue()
-  ],
   build: {
     outDir: 'dist',
     copyPublicDir: false,
@@ -20,6 +27,8 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].js',
         assetFileNames: (assetInfo) => {
           if (!assetInfo.names?.[0]) return ''
 

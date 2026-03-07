@@ -20,7 +20,7 @@ export class EventEmitter<TEvents extends Record<string, any>>
   /**
    * Unsubscribe from an event
    */
-  off<K extends keyof TEvents>(event: K, callback: (data: TEvents[K]) => void): void
+  off<K extends keyof TEvents>(event: K, callback: (data: TEvents[K] | undefined) => void): void
   {
     if (!this.listeners[event]) return
 

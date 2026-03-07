@@ -208,8 +208,6 @@ export interface VideoPlayerInterface {
   logging: boolean;
   context?: any;
 
-  [p: string]: any;
-
   normalizeSources(sources: (string | Partial<VideoSource>)[]): VideoSource[];
 
   initializeControlsVisibility(): void;
