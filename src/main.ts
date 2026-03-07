@@ -1,7 +1,7 @@
 import { registerComponents, createPlayer } from '.'
 
 import videos from '../videos'
-import './styles/main.scss'
+import './scss/styles.scss'
 
 // Register web components
 registerComponents()

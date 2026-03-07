@@ -15,8 +15,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/vanilla.ts',
         'src/main.ts',
-        'src/App.vue',
-        'src/demo/**/*'
+        'src/App.vue'
       ],
       entryRoot: 'src',
       copyDtsFiles: false
@@ -29,11 +28,11 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        'context-menu': resolve(__dirname, 'src/index.ts'),
-        'context-menu-vue': resolve(__dirname, 'src/vue.ts'),
+        'video-player': resolve(__dirname, 'src/index.ts'),
+        'video-player-vue': resolve(__dirname, 'src/vue.ts'),
         'styles': resolve(__dirname, 'src/scss/styles.scss')
       },
-      name: 'ContextMenu',
+      name: 'VideoPlayer',
       fileName: (_, entryName) => `${entryName}.js`,
       formats: ['es']
     },
