@@ -3,7 +3,7 @@ import { registerComponents, createPlayer } from '.'
 import videos from '../videos'
 import './styles/main.scss'
 
-// Register web components (not required if created using createPlayer)
+// Register web components
 registerComponents()
 
 const errorHandler = (error: Error | any) => {

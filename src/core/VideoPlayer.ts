@@ -36,8 +36,6 @@ import type {
   VolumeControlComponent
 } from '@/modules/ui/web-components'
 
-import { whenDefined } from '@/modules/ui/web-components'
-
 /**
  * Main Video Player class - orchestrates all components
  */
@@ -207,9 +205,6 @@ export class VideoPlayer implements VideoPlayerInterface {
    * Initialize the video player
    */
   async initializePlayer(): Promise<void> {
-    // Wait for the components to be ready
-    await whenDefined()
-
     this.playerElement = this.root.querySelector('.player') as HTMLElement
     if (!this.playerElement) {
       throw new Error('Player element not found after rendering template')
@@ -231,8 +226,6 @@ export class VideoPlayer implements VideoPlayerInterface {
 
     // Applying dimensions to the container
     this.applyContainerSizes()
-
-    await this.initializeIcons()
 
     // Initialize controllers
     this.initializeControllers()
@@ -266,13 +259,15 @@ export class VideoPlayer implements VideoPlayerInterface {
       this.handlePause()
     }
 
+    await this.initializeIcons()
+
     // Defer the initial check to ensure the layout is stable
     await this.awaitLayout('.player__panel')
 
     this.handleResize()
   }
 
-  awaitLayout(selector: string, ms: number = 990): Promise<void> {
+  awaitLayout(selector: string, ms: number = 0): Promise<void> {
     return new Promise(resolve => {
       let el: HTMLElement | null
 

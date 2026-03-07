@@ -1,9 +1,14 @@
 import { IConfig, ISector, Manager, defineConfig } from '@alekstar79/context-menu'
 
 import type { VideoPlayerConfig } from './types'
-import { VideoPlayerComponent, registerComponents } from './modules/ui/web-components'
 import { VideoPlayer } from './core/VideoPlayer'
 import { Helpers } from '@/core/utils'
+
+import {
+  VideoPlayerComponent,
+  registerComponents,
+  whenDefined
+} from './modules/ui/web-components'
 
 type ContextMenuConfig = Partial<IConfig>
 
@@ -118,10 +123,9 @@ export async function createPlayer(
   container: HTMLElement,
   config: Partial<VideoPlayerConfig>
 ): Promise<VideoPlayer> {
-  registerComponents()
+  await whenDefined()
 
   const videoPlayer = document.createElement('video-player') as VideoPlayerComponent
-
   Object.assign(videoPlayer, defaultPlayerConfig, config)
   container.appendChild(videoPlayer)
 
@@ -145,5 +149,6 @@ export async function createPlayer(
 export {
   type VideoPlayerComponent,
   type VideoPlayerConfig,
-  registerComponents
+  registerComponents,
+  whenDefined
 }
