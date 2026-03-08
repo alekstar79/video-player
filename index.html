@@ -6,20 +6,21 @@
   <link rel="shortcut icon" href="./favicon.png" type="image/png">
   <title>Video Player</title>
   <style>
-    html,
-    body {
+    * {
       box-sizing: border-box;
-      overflow: hidden;
       margin: 0;
       padding: 0;
     }
     body {
+      font-family: sans-serif;
+      background: #E3F2FD;
+    }
+    #app {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      font-family: sans-serif;
-      background: #E3F2FD;
+      padding: 20px;
     }
     .loading {
       display: flex;
@@ -64,7 +65,7 @@
       <div class="loading__spinner"></div>
     </div>
   </div>
-  <script type="module" src="./src/main.ts"></script>
+  <script type="module" src="src/main-vue.ts"></script>
 
   <!--
   <video-player

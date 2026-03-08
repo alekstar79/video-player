@@ -45,8 +45,10 @@ export default class PreviewPanelComponent extends BaseComponent
     return Object.values(ATTRIBUTES)
   }
 
-  attributeChangedCallback(name: string, _oldValue: string, newValue: string)
+  attributeChangedCallback(name: string, _: string, newValue: string)
   {
+    console.log('attributeChangedCallback', name, _, newValue)
+
     if (name === ATTRIBUTES.VISIBLE) {
       this.style.display = newValue !== null ? 'block' : 'none'
     }

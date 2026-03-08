@@ -794,6 +794,7 @@ export class VideoPlayer implements VideoPlayerInterface {
     })
 
     this.previewPanel?.addEventListener('close', async () => {
+      console.trace('Closing preview panel')
       await this.togglePreviewPanel()
     })
 
@@ -1491,6 +1492,9 @@ export class VideoPlayer implements VideoPlayerInterface {
     if (this.sources.length === 0) return
 
     const isVisible = this.previewPanel.hasAttribute('visible')
+
+    console.log('togglePreviewPanel', { isVisible })
+
     if (!isVisible) {
       this.previewPanel.setAttribute('visible', '')
       await this.generateAndShowPreview()
