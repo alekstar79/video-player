@@ -109,6 +109,8 @@ export class VideoPlayer implements VideoPlayerInterface {
     this.config.muted = Helpers.parseBoolean(config.muted ?? false)
     this.logging = Helpers.parseBoolean(config.logging ?? false)
 
+    this.togglePreviewPanel = Helpers.debounce(this.togglePreviewPanel.bind(this), 50)
+
     this.events = new EventEmitter()
     this.zIndex = zIndex()
     this.controlsVisibility = {
@@ -794,7 +796,6 @@ export class VideoPlayer implements VideoPlayerInterface {
     })
 
     this.previewPanel?.addEventListener('close', async () => {
-      console.trace('Closing preview panel')
       await this.togglePreviewPanel()
     })
 
@@ -1492,9 +1493,6 @@ export class VideoPlayer implements VideoPlayerInterface {
     if (this.sources.length === 0) return
 
     const isVisible = this.previewPanel.hasAttribute('visible')
-
-    console.log('togglePreviewPanel', { isVisible })
-
     if (!isVisible) {
       this.previewPanel.setAttribute('visible', '')
       await this.generateAndShowPreview()

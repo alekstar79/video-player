@@ -97,4 +97,23 @@ export class Helpers
 
     return a.origin !== window.location.origin
   }
+
+  /**
+   * Debounce function
+   */
+  static debounce<F extends (...args: any[]) => any>(
+    func: F, ms: number,
+  ): (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>> {
+    let timeoutId: ReturnType<typeof setTimeout>
+
+    return (...args: Parameters<F>): Promise<Awaited<ReturnType<F>>> => {
+      clearTimeout(timeoutId)
+
+      return new Promise(resolve => {
+        timeoutId = setTimeout(async () => {
+          resolve(await func(...args))
+        }, ms)
+      })
+    }
+  }
 }
