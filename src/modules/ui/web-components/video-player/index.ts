@@ -157,8 +157,6 @@ export default class VideoPlayerComponent extends BaseComponent
       }
     }
 
-    console.log('VideoPlayerComponent:whenReady', config)
-
     this.playerInstance = new VideoPlayer(config, this.shadow)
     this.playerInstance.on('mounted', () => {
       resolve(this.playerInstance)

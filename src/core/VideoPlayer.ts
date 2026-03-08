@@ -224,8 +224,6 @@ export class VideoPlayer implements VideoPlayerInterface {
     this.noFilesMessage = this.root.querySelector('.player__no-files-message')!
     this.sourceTitleElement = this.root.querySelector('.player__source-title')!
 
-    console.log('Initializing player 1')
-
     // Applying dimensions to the container
     this.applyContainerSizes()
 
@@ -264,30 +262,23 @@ export class VideoPlayer implements VideoPlayerInterface {
     await this.initializeIcons()
 
     // Defer the initial check to ensure the layout is stable
-    // await this.awaitLayout('.player__panel')
-    await new Promise(resolve => setTimeout(resolve, 900))
-
-    console.log('Initializing player 2')
+    await this.awaitLayout('.player__panel')
 
     this.handleResize()
   }
 
-  awaitLayout(selector: string, ms: number = 0): Promise<void> {
+  awaitLayout(selector: string, ms: number = 500): Promise<void> {
     return new Promise(resolve => {
-      let el: HTMLElement | null
+      const start = Date.now()
 
-      const checkDimensions = (deadline: IdleDeadline) => {
-        while (!el && deadline.timeRemaining() > 0) {
-          el ??= this.root.querySelector(selector)
-        }
+      const checkDimensions = () => {
+        const el = this.root.querySelector(selector) as HTMLElement
+        const expired = Date.now() - start > ms
 
-        console.log(`Layout:${selector}`, el)
-
-        if (!el || el.offsetWidth <= 0) {
+        if (!expired && !el || el.offsetWidth <= 0) {
           requestIdleCallback(checkDimensions)
         } else {
-          console.log('Layout is stable')
-          setTimeout(resolve, ms)
+          resolve()
         }
       }
 

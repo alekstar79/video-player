@@ -123,7 +123,7 @@ onMounted(async () => {
 
       // playerElement = tempContainer.firstChild as HTMLElement
       // tempContainer.removeChild(playerElement)
-      // replaceRoot(playerElement)
+      // replaceRoot(playerContainerRef.value.firstChild)
     }
   } catch (e) {
     console.error(e)
