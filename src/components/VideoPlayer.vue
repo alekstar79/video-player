@@ -17,9 +17,12 @@ import type {
 
 import { registerComponents, createPlayer } from '@/index'
 
+registerComponents()
+
 // Define props for the component, mirroring VideoPlayerConfig
 const props = withDefaults(defineProps<Partial<VideoPlayerConfig>>(), {
   aspectRatio: '16:9',
+  initialVolume: 0.7,
   maxWidth: '960px',
   showControls: true,
   nextButton: true,
@@ -59,8 +62,6 @@ defineExpose({
   toggleFullscreen: () => playerInstance?.toggleFullscreen(),
   getPlayerInstance: (): VideoPlayer | null => playerInstance
 })
-
-registerComponents()
 
 function replaceRoot(newElement: HTMLElement) {
   const oldEl = instance?.vnode.el

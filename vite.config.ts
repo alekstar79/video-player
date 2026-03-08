@@ -1,8 +1,15 @@
 import { extname, resolve } from 'path'
 import { defineConfig } from 'vite'
+import pkg from './package.json'
 
 import vue from '@vitejs/plugin-vue'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+
+const banner = `/*!
+ * ${pkg.name} v${pkg.version}
+ * ${new Date().getFullYear()} ${pkg.author.split(' <')[0]}
+ * @license ${pkg.license}
+ */`
 
 export default defineConfig({
   plugins: [
@@ -25,6 +32,17 @@ export default defineConfig({
     copyPublicDir: false,
     emptyOutDir: true,
     sourcemap: true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+      format: {
+        comments: false,
+        preamble: banner,
+      },
+    },
     rollupOptions: {
       output: {
         entryFileNames: '[name].js',

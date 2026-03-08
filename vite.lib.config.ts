@@ -1,8 +1,15 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import pkg from './package.json'
 
 import vue from '@vitejs/plugin-vue'
 import dts from 'vite-plugin-dts'
+
+const banner = `/*!
+ * ${pkg.name} v${pkg.version}
+ * ${new Date().getFullYear()} ${pkg.author.split(' <')[0]}
+ * @license ${pkg.license}
+ */`
 
 export default defineConfig({
   plugins: [
@@ -35,9 +42,10 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', '@alekstar79/context-menu'],
       output: {
         globals: {
+          '@alekstar79/context-menu': 'ContextMenu',
           vue: 'Vue'
         },
         entryFileNames: '[name].js',
@@ -59,7 +67,17 @@ export default defineConfig({
     emptyOutDir: true,
     copyPublicDir: false,
     target: 'es2024',
-    minify: 'esbuild',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+      format: {
+        comments: false,
+        preamble: banner,
+      },
+    },
     sourcemap: true,
   },
   server: {
