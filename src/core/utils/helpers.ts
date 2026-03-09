@@ -80,7 +80,7 @@ export class Helpers
    */
   static isPromiseLike<T extends any>(value: any): value is PromiseLike<T>
   {
-    return value && (value as PromiseLike<T>).then !== undefined
+    return !!value && (value as PromiseLike<T>).then !== undefined
   }
 
   /**

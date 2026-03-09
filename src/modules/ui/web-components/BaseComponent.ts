@@ -2,7 +2,7 @@ import { IconHelper } from '@/core/utils'
 
 export abstract class BaseComponent extends HTMLElement
 {
-  protected shadow: ShadowRoot
+  public shadow: ShadowRoot
 
   protected constructor()
   {
@@ -10,7 +10,7 @@ export abstract class BaseComponent extends HTMLElement
     this.shadow = this.attachShadow({ mode: 'open' })
   }
 
-  protected render(template: string, styles?: string): void
+  public render(template: string, styles?: string): void
   {
     // Preload icons before rendering
     IconHelper.loadIcons().catch(() => {
@@ -30,17 +30,17 @@ export abstract class BaseComponent extends HTMLElement
     this.shadow.appendChild(templateElement.content.cloneNode(true))
   }
 
-  protected getElement<T extends HTMLElement | SVGElement>(selector: string): T | null
+  public getElement<T extends HTMLElement | SVGElement>(selector: string): T | null
   {
     return this.shadow.querySelector<T>(selector)
   }
 
-  protected getElements<T extends HTMLElement | SVGElement>(selector: string): NodeListOf<T>
+  public getElements<T extends HTMLElement | SVGElement>(selector: string): NodeListOf<T>
   {
     return this.shadow.querySelectorAll<T>(selector)
   }
 
-  protected emit<T>(eventName: string, detail?: T): void
+  public emit<T>(eventName: string, detail?: T): void
   {
     this.dispatchEvent(new CustomEvent(eventName, { bubbles: true, composed: true, detail }))
   }
@@ -48,21 +48,21 @@ export abstract class BaseComponent extends HTMLElement
   /**
    * Helper to create SVG icon element
    */
-  protected createIcon(iconId: string, className?: string): SVGElement {
+  public createIcon(iconId: string, className?: string): SVGElement {
     return IconHelper.createIconElement(iconId, className)
   }
 
   /**
    * Helper to get icon HTML
    */
-  protected getIcon(iconId: string): string {
+  public getIcon(iconId: string): string {
     return IconHelper.getIcon(iconId)
   }
 
   /**
    * Helper to insert icon into element
    */
-  protected insertIcon(element: Element, iconId: string, className?: string): void {
+  public insertIcon(element: Element, iconId: string, className?: string): void {
     IconHelper.insertIcon(element, iconId, className)
   }
 }

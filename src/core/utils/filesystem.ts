@@ -1,20 +1,3 @@
-interface AcceptableTypes {
-  description?: string;
-  accept: {
-    [key: string]: string[]
-  };
-}
-
-interface FilePickerOptions {
-  id?: string;
-  excludeAcceptAllOption?: boolean;
-  multiple?: boolean;
-  startIn?: FileSystemHandle;
-  types?: AcceptableTypes[];
-}
-
-declare function showOpenFilePicker(options: FilePickerOptions): Promise<FileSystemFileHandle[]>;
-
 /**
  * Utility for opening file dialog - replacement for old utils.js open function
  */
@@ -182,7 +165,11 @@ export class Filesystem
    */
   static getFileExtension(filename: string): string
   {
-    return filename.split('.').pop()?.toLowerCase() || ''
+    const parts = filename.split('.')
+
+    return parts.length > 1
+      ? parts[parts.length - 1].toLowerCase()
+      : ''
   }
 
   /**
