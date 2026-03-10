@@ -132,8 +132,6 @@ describe('Helpers', () => {
       // Should only be called once with the last arguments
       expect(mockFn).toHaveBeenCalledTimes(1)
       expect(mockFn).toHaveBeenCalledWith('third')
-
-      // Per Vitest logs, this await is necessary for future versions
       expect(promise).resolves.toBe('result')
 
       vi.useRealTimers()

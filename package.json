@@ -51,19 +51,16 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@alekstar79/context-menu": "^2.0.9",
+    "@alekstar79/context-menu": "^2.1.3",
     "vue": "^3.5.13"
   },
   "peerDependenciesMeta": {
-    "@alekstar79/context-menu": {
-      "optional": true
-    },
     "vue": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@alekstar79/context-menu": "^2.0.9",
+    "@alekstar79/context-menu": "^2.1.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^25.2.3",
     "@vitejs/plugin-vue": "^6.0.4",

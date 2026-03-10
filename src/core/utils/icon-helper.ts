@@ -1,19 +1,41 @@
 export class IconHelper {
   private static iconsLoaded = false
   private static iconsCache: Map<string, string> = new Map()
+  private static attempt = false
+  private static svgText = ''
+
+  public static async fetch(url: string): Promise<string> {
+    const base = import.meta.env.BASE_URL || '/'
+    const response = await fetch(`${base}${url}`)
+
+    return response.ok ? response.text() : ''
+  }
+
+  public static async getDefaultIcons(): Promise<string> {
+    const svgText = await import('./default.svg?raw')
+    return svgText.default
+  }
 
   /**
    * Load icons from the SVG sprite
    */
-  public static async loadIcons(): Promise<void> {
-    if (this.iconsLoaded) return
+  public static async loadIcons(
+    url: string = 'icons.svg',
+    defaultIcons: boolean = true
+  ): Promise<string> {
+    if (this.iconsLoaded) return this.svgText
 
     try {
-      const base = import.meta.env.BASE_URL || '/'
-      const response = await fetch(`${base}icons.svg`)
-      const svgText = await response.text()
+      this.svgText = defaultIcons ? await this.getDefaultIcons() : await this.fetch(url)
+
       const parser = new DOMParser()
-      const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
+      const svgDoc = parser.parseFromString(this.svgText, 'image/svg+xml')
+      const parserError = svgDoc.querySelector('parsererror')
+
+      if (parserError && !this.attempt) {
+        this.attempt = true
+        return this.loadIcons(url, true)
+      }
 
       // Extract all symbol definitions
       svgDoc.querySelectorAll<SVGElement>('svg > g')
@@ -32,10 +54,12 @@ export class IconHelper {
           }
         })
 
-      this.iconsLoaded = true
+      this.iconsLoaded = !!this.iconsCache.size
     } catch (error) {
       console.error('Failed to load icons:', error)
     }
+
+    return this.svgText
   }
 
   /**

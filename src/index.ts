@@ -1,16 +1,14 @@
 import { IConfig, ISector, Manager, defineConfig } from '@alekstar79/context-menu'
 
 import type { VideoPlayerConfig } from './types'
+import { Helpers, IconHelper } from '@/core/utils'
 import { VideoPlayer } from './core/VideoPlayer'
-import { Helpers } from '@/core/utils'
 
 import {
   VideoPlayerComponent,
   registerComponents,
   whenDefined
 } from './modules/ui/web-components'
-
-type ContextMenuConfig = Partial<IConfig>
 
 export const defaultPlayerConfig: Partial<VideoPlayerConfig> = {
   initialSources: [],
@@ -58,7 +56,18 @@ export const defaultContextConfig = defineConfig({
   ]
 })
 
-const isContextConfig = (obj: any): obj is ContextMenuConfig => typeof obj === 'object' && obj !== null
+const isConfig = (obj: any): obj is Partial<IConfig> => typeof obj === 'object' && obj !== null
+
+function getContextConfig(config: Partial<VideoPlayerConfig>)
+{
+  const contextMenu = isConfig(config.contextMenu)
+    ? Object.assign({}, defaultContextConfig, config.contextMenu)
+    : Boolean(config.contextMenu)
+
+  return typeof contextMenu === 'boolean'
+    ? defaultContextConfig
+    : contextMenu
+}
 
 export const resolver = (
   player: VideoPlayer | PromiseLike<VideoPlayer>,
@@ -79,7 +88,10 @@ export const resolver = (
 export async function createContextMenu(
   vp: VideoPlayer | PromiseLike<VideoPlayer>,
   contextConfig: IConfig
-): Promise<void> {
+): Promise<{
+  manager: Manager,
+  player: VideoPlayer
+}> {
   const { player, manager } = await resolver(vp, contextConfig)
 
   player.context = manager
@@ -117,6 +129,8 @@ export async function createContextMenu(
       manager.menu.updateButtons()
       manager.show(e)
     })
+
+  return { player, manager }
 }
 
 export async function createPlayer(
@@ -130,17 +144,16 @@ export async function createPlayer(
   container.appendChild(videoPlayer)
 
   const playerInstance = await videoPlayer.whenReady()
-  const contextMenu = isContextConfig(config.contextMenu)
-    ? Object.assign({}, defaultContextConfig, config.contextMenu)
-    : Boolean(config.contextMenu)
+  const contextConfig = getContextConfig(config)
+  const icons = await IconHelper.loadIcons(contextConfig.sprite)
 
-  if (contextMenu) {
-    await createContextMenu(
+  if (config.contextMenu) {
+    const { manager } = await createContextMenu(
       playerInstance,
-      typeof contextMenu === 'boolean'
-        ? defaultContextConfig
-        : contextMenu
+      contextConfig
     )
+
+    manager.setIcons(icons)
   }
 
   return playerInstance
@@ -150,5 +163,6 @@ export {
   type VideoPlayerComponent,
   type VideoPlayerConfig,
   registerComponents,
-  whenDefined
+  whenDefined,
+  IconHelper
 }

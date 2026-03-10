@@ -254,7 +254,6 @@ describe('Filesystem', () => {
       const testError = new Error('Test error')
       ;(global as any).showOpenFilePicker = vi.fn().mockRejectedValue(testError)
 
-      // Per Vitest logs, this await is necessary for future versions
       expect(Filesystem.selectFileWithPicker('video/*')).rejects.toThrow(testError)
     })
   })
