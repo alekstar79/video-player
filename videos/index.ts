@@ -1,10 +1,10 @@
 export const getVideoUrl = (filename: string) => {
-  return new URL(`../public/${filename}`, import.meta.url).href
+  return new URL(filename, import.meta.url).href
 }
 
 export default [
-  getVideoUrl('Synthwave.mp4'),
-  getVideoUrl('GalaxyNebula.mp4'),
+  getVideoUrl('/Synthwave.mp4'),
+  getVideoUrl('/GalaxyNebula.mp4'),
   {
     description: 'Big Buck Bunny tells the story of a giant rabbit with a heart bigger than himself. When one sunny day three rodents rudely harass him, something snaps... and the rabbit ain\'t no bunny anymore! In the typical cartoon tradition he prepares the nasty rodents a comical revenge.\n\nLicensed under the Creative Commons Attribution license\nhttps://www.bigbuckbunny.org',
     source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',

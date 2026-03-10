@@ -5,6 +5,8 @@
 [![GitHub](https://img.shields.io/badge/github-repo-green.svg?style=flat)](https://github.com/alekstar79/video-player)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square)](https://www.typescriptlang.org)
 [![Coverage](https://img.shields.io/badge/coverage-81.65%25-brightgreen.svg)](https://github.com/alekstar79/video-player)
+[![Vue 3](https://img.shields.io/badge/Vue%203-4FC08D?style=flat&logo=vuedotjs&logoColor=white)](https://vuejs.org)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)](https://vite.dev)
 
 _A modern, feature-rich video player built with TypeScript and Web Components.
 Supports native JavaScript and Vue 3 integration. Includes a customizable circular context menu,
@@ -333,14 +335,14 @@ const thumbnails = await getThumbnails(file, {
 
 ## Styling and Customization
 
-- **CSS import**: `import '@alekstar79/video-player/lib/styles.css'` (required).
+- **CSS import**: `import '@alekstar79/video-player/lib/styles.css'` (optional).
 - The player uses **Shadow DOM** for its internal components, so its styles are encapsulated.
 - You can still style the outer container (the custom element `<video-player>`) using normal CSS.
 - For deep customisation, consider forking the repository and modifying the SCSS sources.
 
 ### Icons
 
-The player expects an SVG sprite at `/icons.svg` (relative to your deployment root).
+The player optionally expects an SVG sprite at `/icons.svg` (relative to your deployment root).
 During the build, the file is copied from `public/icons.svg`. If you need a different location,
 provide your own sprite or adjust the `IconHelper` logic.
 
@@ -354,7 +356,6 @@ provide your own sprite or adjust the `IconHelper` logic.
 <button id="next">Next</button>
 
 <script type="module">
-  import '@alekstar79/video-player/lib/styles.css'
   import { registerComponents, createPlayer } from '@alekstar79/video-player'
 
   registerComponents()
