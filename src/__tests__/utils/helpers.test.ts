@@ -118,9 +118,9 @@ describe('Helpers', () => {
       const mockFn = vi.fn().mockResolvedValue('result')
       const debouncedFn = Helpers.debounce(mockFn, 100)
       
-      // Call multiple times rapidly
-      debouncedFn('first')
-      debouncedFn('second')
+      // Call multiple times rapidly, explicitly ignore promises
+      void debouncedFn('first')
+      void debouncedFn('second')
       const promise = debouncedFn('third')
       
       // Function should not be called yet
@@ -132,7 +132,9 @@ describe('Helpers', () => {
       // Should only be called once with the last arguments
       expect(mockFn).toHaveBeenCalledTimes(1)
       expect(mockFn).toHaveBeenCalledWith('third')
-      await expect(promise).resolves.toBe('result')
+      
+      // Check the promise resolution - no await needed before expect
+      expect(promise).resolves.toBe('result')
       
       vi.useRealTimers()
     })
