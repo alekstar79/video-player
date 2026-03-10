@@ -250,12 +250,12 @@ describe('Filesystem', () => {
       expect(result).toBeNull()
     })
 
-    it('should re-throw other errors', () => {
+    it('should re-throw other errors', async () => {
       const testError = new Error('Test error')
       ;(global as any).showOpenFilePicker = vi.fn().mockRejectedValue(testError)
 
-      // No await needed here
-      expect(Filesystem.selectFileWithPicker('video/*')).rejects.toThrow(testError)
+      // Per Vitest logs, this await is necessary for future versions
+      await expect(Filesystem.selectFileWithPicker('video/*')).rejects.toThrow(testError)
     })
   })
 })

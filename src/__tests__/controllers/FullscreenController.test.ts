@@ -4,7 +4,7 @@ import type { CustomChangeCallback } from '@/types'
 
 const mockFullscreenAPI = (supported = true) => {
   const requestFullscreenMock = vi.fn().mockResolvedValue(undefined)
-  
+
   // Mock API on the document for discovery
   Object.defineProperty(document.documentElement, 'requestFullscreen', {
     value: supported ? requestFullscreenMock : undefined,
@@ -128,11 +128,11 @@ describe('FullscreenController', () => {
       expect(customElement.requestFullscreen).toHaveBeenCalledWith(options)
     })
 
-    it('should throw error when fullscreen not enabled', () => {
+    it('should throw error when fullscreen not enabled', async () => {
       mockFullscreenAPI(false)
       const controller = new FullscreenController(element)
-      // No await needed here as per Vitest docs for .rejects
-      expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
+      // Per Vitest logs, this await is necessary for future versions
+      await expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
     })
 
     it('should exit fullscreen', async () => {
