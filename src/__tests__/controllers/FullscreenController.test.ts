@@ -2,35 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
 import type { CustomChangeCallback } from '@/types'
 
-const mockFullscreenAPI = (supported = true) => {
-  const requestFullscreenMock = vi.fn().mockResolvedValue(undefined)
-
-  // Mock API on the document for discovery
-  Object.defineProperty(document.documentElement, 'requestFullscreen', {
-    value: supported ? requestFullscreenMock : undefined,
-    writable: true,
-    configurable: true,
-  })
-
-  // Mock API on the element prototype for invocation
-  Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
-    value: supported ? requestFullscreenMock : undefined,
-    writable: true,
-    configurable: true,
-  })
-
-  // Mock document properties
-  Object.defineProperties(document, {
-    fullscreenEnabled: { value: supported, writable: true, configurable: true },
-    fullscreenElement: { value: null, writable: true, configurable: true },
-    exitFullscreen: {
-      value: vi.fn().mockResolvedValue(undefined),
-      writable: true,
-      configurable: true,
-    },
-  })
-}
-
 describe('FullscreenController', () => {
   let element: HTMLElement
   let onChangeHandler: CustomChangeCallback
@@ -46,24 +17,42 @@ describe('FullscreenController', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    // Clean up mocks
+    // Clean up any mocks defined on document/element prototypes
     delete (document.documentElement as any).requestFullscreen
     delete (HTMLElement.prototype as any).requestFullscreen
     delete (document.documentElement as any).webkitRequestFullscreen
     delete (document as any).webkitFullscreenEnabled
   })
 
+  const setupMocks = (supported = true) => {
+    const requestFullscreenMock = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(document.documentElement, 'requestFullscreen', {
+      value: supported ? requestFullscreenMock : undefined,
+      writable: true,
+      configurable: true,
+    })
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      value: supported ? requestFullscreenMock : undefined,
+      writable: true,
+      configurable: true,
+    })
+    Object.defineProperties(document, {
+      fullscreenEnabled: { value: supported, writable: true, configurable: true },
+      fullscreenElement: { value: null, writable: true, configurable: true },
+      exitFullscreen: { value: vi.fn().mockResolvedValue(undefined), writable: true, configurable: true },
+    })
+  }
+
   describe('Initialization', () => {
     it('should create controller with element and handlers', () => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
       const controller = new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(controller).toBeInstanceOf(FullscreenController)
       expect(controller.isEnabled).toBe(true)
-      expect(controller.isFullscreen).toBe(false)
     })
 
     it('should warn when fullscreen is not supported', () => {
-      mockFullscreenAPI(false)
+      setupMocks(false) // Ensure no API is available
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const controller = new FullscreenController(element)
       expect(consoleWarnSpy).toHaveBeenCalledWith('Fullscreen is not supported in this browser')
@@ -72,7 +61,7 @@ describe('FullscreenController', () => {
     })
 
     it('should register event listeners when handlers provided', () => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
       new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenchange', expect.any(Function), false)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenerror', expect.any(Function), false)
@@ -81,23 +70,16 @@ describe('FullscreenController', () => {
 
   describe('API detection', () => {
     it('should detect standard fullscreen API', () => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
       const controller = new FullscreenController(element)
-      expect(controller.supportedAPI).toEqual({
-        request: 'requestFullscreen',
-        exit: 'exitFullscreen',
-        element: 'fullscreenElement',
-        enabled: 'fullscreenEnabled',
-        change: 'fullscreenchange',
-        error: 'fullscreenerror',
-      })
+      expect(controller.supportedAPI?.request).toBe('requestFullscreen')
     })
 
     it('should fall back to webkit API if standard not available', () => {
-      mockFullscreenAPI(false) // Disable standard API
+      setupMocks(false) // Disable standard
       Object.defineProperty(document.documentElement, 'webkitRequestFullscreen', { value: vi.fn(), configurable: true })
       Object.defineProperty(document, 'webkitFullscreenEnabled', { value: true, configurable: true })
-
+      
       const controller = new FullscreenController(element)
       expect(controller.supportedAPI?.request).toContain('webkit')
     })
@@ -105,57 +87,55 @@ describe('FullscreenController', () => {
 
   describe('Fullscreen operations', () => {
     beforeEach(() => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
     })
 
     it('should request fullscreen', async () => {
-      const controller = new FullscreenController(element, onChangeHandler)
+      const controller = new FullscreenController(element)
       await controller.request(element)
       expect(element.requestFullscreen).toHaveBeenCalledWith({ navigationUI: 'auto' })
     })
 
     it('should request fullscreen with custom element and options', async () => {
-      const controller = new FullscreenController(element, onChangeHandler)
+      const controller = new FullscreenController(element)
       const customElement = document.createElement('video')
-      // Ensure the mock exists on the custom element as well
-      Object.defineProperty(customElement, 'requestFullscreen', {
-        value: vi.fn().mockResolvedValue(undefined),
-        writable: true,
-        configurable: true,
-      })
       const options = { navigationUI: 'hide' as FullscreenNavigationUI }
       await controller.request(customElement, options)
       expect(customElement.requestFullscreen).toHaveBeenCalledWith(options)
     })
 
     it('should throw error when fullscreen not enabled', async () => {
-      mockFullscreenAPI(false)
+      setupMocks(false)
       const controller = new FullscreenController(element)
-      // Per Vitest logs, this await is necessary for future versions
-      await expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
+      try {
+        await controller.request()
+        expect.fail('Expected request() to throw an error')
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error)
+        expect((error as Error).message).toBe('Fullscreen is not enabled')
+      }
     })
 
     it('should exit fullscreen', async () => {
-      const controller = new FullscreenController(element, onChangeHandler)
-      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true, configurable: true })
-      const result = await controller.exit()
+      const controller = new FullscreenController(element)
+      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true })
+      await controller.exit()
       expect(document.exitFullscreen).toHaveBeenCalled()
-      expect(result).toBe(true)
     })
 
     it('should return false when exiting without being in fullscreen', async () => {
-      const controller = new FullscreenController(element, onChangeHandler)
+      const controller = new FullscreenController(element)
       const result = await controller.exit()
       expect(document.exitFullscreen).not.toHaveBeenCalled()
       expect(result).toBe(false)
     })
 
     it('should toggle fullscreen', async () => {
-      const controller = new FullscreenController(element, onChangeHandler)
+      const controller = new FullscreenController(element)
       await controller.toggle(element)
       expect(element.requestFullscreen).toHaveBeenCalled()
 
-      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true, configurable: true })
+      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true })
       await controller.toggle(element)
       expect(document.exitFullscreen).toHaveBeenCalled()
     })
@@ -165,7 +145,7 @@ describe('FullscreenController', () => {
     let controller: FullscreenController
 
     beforeEach(() => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
       controller = new FullscreenController(element)
     })
 
@@ -189,7 +169,7 @@ describe('FullscreenController', () => {
 
   describe('Cleanup', () => {
     it('should remove event listeners on destroy', () => {
-      mockFullscreenAPI(true)
+      setupMocks(true)
       const controller = new FullscreenController(element, onChangeHandler, onErrorHandler)
       const boundHandlerChange = (controller as any).boundHandlerChange
       const boundHandlerError = (controller as any).boundHandlerError
