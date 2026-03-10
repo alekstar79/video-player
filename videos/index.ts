@@ -1,6 +1,4 @@
-export const getVideoUrl = (filename: string) => {
-  return new URL(filename, import.meta.url).href
-}
+export const getVideoUrl = (filename: string) => new URL(filename, import.meta.url).href
 
 export default [
   getVideoUrl('/Synthwave.mp4'),

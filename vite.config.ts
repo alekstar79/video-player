@@ -66,12 +66,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
-    open: true,
-    fs: {
-      strict: true,
-      allow: ['..']
-    }
+    port: 3000
   },
   css: {
     preprocessorOptions: {
