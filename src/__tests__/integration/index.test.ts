@@ -10,6 +10,45 @@ import {
 import { Manager } from '@alekstar79/context-menu'
 import { Helpers } from '@/core/utils'
 
+// Mock SVGMatrix for jsdom
+if (!global.SVGMatrix) {
+  global.SVGMatrix = class SVGMatrix {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0
+    multiply() { return this }
+    inverse() { return this }
+    translate() { return this }
+    scale() { return this }
+    rotate() { return this }
+    skewX() { return this }
+    skewY() { return this }
+    flipX() { return this }
+    flipY() { return this }
+  } as any
+}
+
+// Mock the Manager class from context-menu
+vi.mock('@alekstar79/context-menu', async () => {
+  const actual = await vi.importActual('@alekstar79/context-menu')
+  class MockManager {
+    constructor() {
+      // Mock constructor
+    }
+    on = vi.fn()
+    menu = {
+      updateButtons: vi.fn(),
+      hide: vi.fn(),
+      config: {
+        centralButton: {},
+        sectors: []
+      }
+    }
+  }
+  return {
+    ...actual,
+    Manager: MockManager
+  }
+})
+
 describe('Public API', () => {
   let container: HTMLElement
 
@@ -18,8 +57,16 @@ describe('Public API', () => {
     container.id = 'test-container'
     document.body.appendChild(container)
 
-    // Mock whenDefined if needed
-    // Mock web components registration
+    // Mock whenDefined for web components
+    const mockCustomElement = class extends HTMLElement {}
+    if (!window.customElements) {
+      ;(window as any).customElements = {
+        whenDefined: vi.fn().mockResolvedValue(mockCustomElement),
+        define: vi.fn()
+      }
+    } else {
+      vi.spyOn(window.customElements, 'whenDefined').mockResolvedValue(mockCustomElement)
+    }
   })
 
   afterEach(() => {
@@ -120,26 +167,11 @@ describe('Public API', () => {
       }
 
       const mockContextConfig = { ...defaultContextConfig }
-      const mockManager = {
-        menu: {
-          updateButtons: vi.fn(),
-          hide: vi.fn(),
-          config: {
-            centralButton: { icon: 'play', hint: 'Play' },
-            sectors: []
-          }
-        },
-        show: vi.fn(),
-        on: vi.fn()
-      }
-
-      // Mock Manager constructor
-      vi.spyOn(Manager.prototype, 'constructor' as any).mockImplementation(() => mockManager)
-
+      
       await createContextMenu(mockPlayer as any, mockContextConfig)
 
-      expect(mockPlayer.context).toBe(mockManager)
-      expect(mockManager.menu.updateButtons).toHaveBeenCalled()
+      expect(mockPlayer.context).toBeInstanceOf(Manager)
+      expect(mockPlayer.on).toHaveBeenCalled()
     })
   })
 

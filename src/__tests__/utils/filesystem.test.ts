@@ -129,16 +129,17 @@ describe('Filesystem', () => {
   })
 
   describe('saveFile', () => {
-    it('should trigger file download', () => {
+    it('should trigger file download', async () => {
+      vi.useFakeTimers()
       const blob = new Blob(['test'], { type: 'text/plain' })
       const filename = 'test.txt'
 
       const mockAnchor = {
         download: '',
         href: '',
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn()
+        click: vi.fn(),
+        dispatchEvent: vi.fn(),
+        parentNode: document.body
       }
 
       vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any)
@@ -148,8 +149,14 @@ describe('Filesystem', () => {
       expect(mockAnchor.download).toBe(filename)
       expect(mockAnchor.href).toBe('blob:test-url')
       expect(document.body.appendChild).toHaveBeenCalledWith(mockAnchor)
+      expect(mockAnchor.dispatchEvent).toHaveBeenCalled()
+
+      // Fast-forward timers to trigger the cleanup
+      vi.runAllTimers()
+
       expect(document.body.removeChild).toHaveBeenCalledWith(mockAnchor)
       expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url')
+      vi.useRealTimers()
     })
   })
 
@@ -247,7 +254,7 @@ describe('Filesystem', () => {
       const testError = new Error('Test error')
       ;(global as any).showOpenFilePicker = vi.fn().mockRejectedValue(testError)
 
-      expect(Filesystem.selectFileWithPicker('video/*')).rejects.toThrow(testError)
+      await expect(Filesystem.selectFileWithPicker('video/*')).rejects.toThrow(testError)
     })
   })
 })

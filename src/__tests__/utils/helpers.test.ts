@@ -119,22 +119,20 @@ describe('Helpers', () => {
       const debouncedFn = Helpers.debounce(mockFn, 100)
       
       // Call multiple times rapidly
-      const promise1 = debouncedFn('first')
-      const promise2 = debouncedFn('second')
-      const promise3 = debouncedFn('third')
+      debouncedFn('first')
+      debouncedFn('second')
+      const promise = debouncedFn('third')
       
       // Function should not be called yet
       expect(mockFn).not.toHaveBeenCalled()
       
       // Fast forward time
-      vi.advanceTimersByTime(100)
-      
-      // Wait for promises
-      await Promise.all([promise1, promise2, promise3])
+      await vi.advanceTimersByTimeAsync(100)
       
       // Should only be called once with the last arguments
       expect(mockFn).toHaveBeenCalledTimes(1)
       expect(mockFn).toHaveBeenCalledWith('third')
+      await expect(promise).resolves.toBe('result')
       
       vi.useRealTimers()
     })
@@ -147,7 +145,8 @@ describe('Helpers', () => {
       
       const promise = debouncedFn('arg')
       
-      vi.advanceTimersByTime(50)
+      await vi.advanceTimersByTimeAsync(50)
+
       const result = await promise
       
       expect(result).toBe('test result')

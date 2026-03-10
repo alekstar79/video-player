@@ -54,8 +54,8 @@ describe('VolumeController', () => {
 
       controller.adjustVolume(0.2)
 
-      expect(mockComponent.setVolume).toHaveBeenCalledWith(0.6)
-      expect(volumeChangeCallback).toHaveBeenCalledWith(0.6)
+      expect(mockComponent.setVolume).toHaveBeenCalledWith(expect.closeTo(0.6))
+      expect(volumeChangeCallback).toHaveBeenCalledWith(expect.closeTo(0.6))
     })
 
     it('should clamp adjusted volume to 0-1 range', () => {
