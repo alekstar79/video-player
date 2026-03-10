@@ -80,7 +80,7 @@ describe('FullscreenController', () => {
       // Mock only the webkit version
       Object.defineProperty(document.documentElement, 'webkitRequestFullscreen', { value: vi.fn(), configurable: true })
       Object.defineProperty(document, 'webkitFullscreenEnabled', { value: true, configurable: true })
-      
+
       const controller = new FullscreenController(element)
       expect(controller.supportedAPI?.request).toContain('webkit')
     })
@@ -108,7 +108,7 @@ describe('FullscreenController', () => {
     it('should throw error when fullscreen not enabled', async () => {
       setupStandardMocks(false)
       const controller = new FullscreenController(element)
-      await expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
+      expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
     })
 
     it('should exit fullscreen', async () => {

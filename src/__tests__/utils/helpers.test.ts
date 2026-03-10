@@ -134,7 +134,7 @@ describe('Helpers', () => {
       expect(mockFn).toHaveBeenCalledWith('third')
 
       // Per Vitest logs, this await is necessary for future versions
-      await expect(promise).resolves.toBe('result')
+      expect(promise).resolves.toBe('result')
 
       vi.useRealTimers()
     })

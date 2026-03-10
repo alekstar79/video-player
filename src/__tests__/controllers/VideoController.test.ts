@@ -58,14 +58,14 @@ describe('VideoController', () => {
     it('should toggle play/pause state', async () => {
       controller.setSource('test.mp4')
       expect(controller.getIsPlaying()).toBe(false)
-      
+
       // Toggle to play
       await controller.togglePlay()
       await vi.runAllTimersAsync()
       videoElement.dispatchEvent(new Event('play')) // Simulate event
       expect(videoElement.play).toHaveBeenCalled()
       expect(controller.getIsPlaying()).toBe(true)
-      
+
       // Toggle to pause
       await controller.togglePlay()
       await vi.runAllTimersAsync()
@@ -157,23 +157,20 @@ describe('VideoController', () => {
 
     it('should set poster image', async () => {
       const thumb = 'http://example.com/thumb.jpg'
-      let onload: () => void = () => {}
-      
-      // Mock Image constructor to intercept onload
-      vi.spyOn(window, 'Image').mockImplementation(() => {
-        const img = new window.Image()
-        Object.defineProperty(img, 'onload', {
-          set(value) {
-            onload = value
-          },
-        })
-        return img
-      })
+
+      // Mock Image constructor correctly using a class
+      class MockImage {
+        onload: () => void = () => {}
+        set src(_url: string) {
+          // Immediately call onload when src is set to simulate loading
+          this.onload()
+        }
+      }
+      vi.stubGlobal('Image', MockImage)
 
       controller.setPoster(thumb)
-      onload() // Manually trigger onload
       await vi.runAllTimersAsync()
-      
+
       expect(videoElement.poster).toBe(thumb)
     })
   })
@@ -293,12 +290,12 @@ describe('VideoController', () => {
 
     it('should revoke blob URLs on destroy', async () => {
       const revokeSpy = vi.spyOn(Filesystem, 'revokeObjectURL')
-      vi.spyOn(Filesystem, 'selectFileWithPicker').mockResolvedValue(new File(['test'], 'video.mp4', { type: 'video/mp4' }))
-      
-      // This method internally creates a blob URL and stores it
-      await controller.loadVideoFile()
+      vi.spyOn(Filesystem, 'createObjectURL').mockReturnValue('blob:test-url')
+
+      // Directly call the method that creates and stores the blob URL
+      await controller.setVideoSource(new File(['test'], 'video.mp4'))
       await vi.runAllTimersAsync()
-      
+
       controller.destroy()
 
       expect(revokeSpy).toHaveBeenCalledWith('blob:test-url')
