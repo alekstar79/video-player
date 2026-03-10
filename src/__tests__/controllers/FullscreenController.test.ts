@@ -7,24 +7,8 @@ describe('FullscreenController', () => {
   let onChangeHandler: CustomChangeCallback
   let onErrorHandler: CustomChangeCallback
 
-  beforeEach(() => {
-    element = document.createElement('div')
-    onChangeHandler = vi.fn<CustomChangeCallback>()
-    onErrorHandler = vi.fn<CustomChangeCallback>()
-    vi.spyOn(document, 'addEventListener')
-    vi.spyOn(document, 'removeEventListener')
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-    // Clean up any mocks defined on document/element prototypes
-    delete (document.documentElement as any).requestFullscreen
-    delete (HTMLElement.prototype as any).requestFullscreen
-    delete (document.documentElement as any).webkitRequestFullscreen
-    delete (document as any).webkitFullscreenEnabled
-  })
-
-  const setupMocks = (supported = true) => {
+  // A helper to setup standard API mocks for a given test
+  const setupStandardMocks = (supported = true) => {
     const requestFullscreenMock = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(document.documentElement, 'requestFullscreen', {
       value: supported ? requestFullscreenMock : undefined,
@@ -43,16 +27,33 @@ describe('FullscreenController', () => {
     })
   }
 
+  beforeEach(() => {
+    element = document.createElement('div')
+    onChangeHandler = vi.fn<CustomChangeCallback>()
+    onErrorHandler = vi.fn<CustomChangeCallback>()
+    vi.spyOn(document, 'addEventListener')
+    vi.spyOn(document, 'removeEventListener')
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    // Clean up any potential mocks
+    delete (document.documentElement as any).requestFullscreen
+    delete (HTMLElement.prototype as any).requestFullscreen
+    delete (document.documentElement as any).webkitRequestFullscreen
+    delete (document as any).webkitFullscreenEnabled
+  })
+
   describe('Initialization', () => {
     it('should create controller with element and handlers', () => {
-      setupMocks(true)
+      setupStandardMocks(true)
       const controller = new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(controller).toBeInstanceOf(FullscreenController)
       expect(controller.isEnabled).toBe(true)
     })
 
     it('should warn when fullscreen is not supported', () => {
-      setupMocks(false) // Ensure no API is available
+      // Ensure no APIs are mocked for this test
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
       const controller = new FullscreenController(element)
       expect(consoleWarnSpy).toHaveBeenCalledWith('Fullscreen is not supported in this browser')
@@ -61,7 +62,7 @@ describe('FullscreenController', () => {
     })
 
     it('should register event listeners when handlers provided', () => {
-      setupMocks(true)
+      setupStandardMocks(true)
       new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenchange', expect.any(Function), false)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenerror', expect.any(Function), false)
@@ -70,13 +71,13 @@ describe('FullscreenController', () => {
 
   describe('API detection', () => {
     it('should detect standard fullscreen API', () => {
-      setupMocks(true)
+      setupStandardMocks(true)
       const controller = new FullscreenController(element)
       expect(controller.supportedAPI?.request).toBe('requestFullscreen')
     })
 
     it('should fall back to webkit API if standard not available', () => {
-      setupMocks(false) // Disable standard
+      // Mock only the webkit version
       Object.defineProperty(document.documentElement, 'webkitRequestFullscreen', { value: vi.fn(), configurable: true })
       Object.defineProperty(document, 'webkitFullscreenEnabled', { value: true, configurable: true })
       
@@ -87,7 +88,7 @@ describe('FullscreenController', () => {
 
   describe('Fullscreen operations', () => {
     beforeEach(() => {
-      setupMocks(true)
+      setupStandardMocks(true)
     })
 
     it('should request fullscreen', async () => {
@@ -105,15 +106,9 @@ describe('FullscreenController', () => {
     })
 
     it('should throw error when fullscreen not enabled', async () => {
-      setupMocks(false)
+      setupStandardMocks(false)
       const controller = new FullscreenController(element)
-      try {
-        await controller.request()
-        expect.fail('Expected request() to throw an error')
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error)
-        expect((error as Error).message).toBe('Fullscreen is not enabled')
-      }
+      await expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
     })
 
     it('should exit fullscreen', async () => {
@@ -142,14 +137,12 @@ describe('FullscreenController', () => {
   })
 
   describe('Event handling', () => {
-    let controller: FullscreenController
-
     beforeEach(() => {
-      setupMocks(true)
-      controller = new FullscreenController(element)
+      setupStandardMocks(true)
     })
 
     it('should register and unregister event listeners', () => {
+      const controller = new FullscreenController(element)
       const callback = vi.fn()
       controller.on('change', callback)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenchange', callback, false)
@@ -158,6 +151,7 @@ describe('FullscreenController', () => {
     })
 
     it('should handle onchange and onerror shortcuts', () => {
+      const controller = new FullscreenController(element)
       const changeCallback = vi.fn()
       const errorCallback = vi.fn()
       controller.onchange(changeCallback)
@@ -169,7 +163,7 @@ describe('FullscreenController', () => {
 
   describe('Cleanup', () => {
     it('should remove event listeners on destroy', () => {
-      setupMocks(true)
+      setupStandardMocks(true)
       const controller = new FullscreenController(element, onChangeHandler, onErrorHandler)
       const boundHandlerChange = (controller as any).boundHandlerChange
       const boundHandlerError = (controller as any).boundHandlerError
