@@ -6,33 +6,22 @@ describe('VideoController', () => {
   let videoElement: HTMLVideoElement
   let eventHandlers: any
   let controller: VideoController
-  let mockPlay: () => Promise<void>
-  let mockPause: () => void
 
   beforeEach(() => {
-    // Create a mock video element
+    vi.useFakeTimers()
     videoElement = document.createElement('video')
-    mockPlay = vi.fn().mockResolvedValue(undefined)
-    mockPause = vi.fn()
 
-    // JSDOM doesn't implement play/pause, so we mock them.
-    Object.defineProperty(videoElement, 'play', {
-      value: mockPlay,
-      writable: true,
-      configurable: true
-    })
-    Object.defineProperty(videoElement, 'pause', {
-      value: mockPause,
-      writable: true,
-      configurable: true
-    })
+    // Mock methods that JSDOM doesn't implement
+    vi.spyOn(videoElement, 'play').mockResolvedValue()
+    vi.spyOn(videoElement, 'pause').mockImplementation(() => {})
+    vi.spyOn(videoElement, 'load').mockImplementation(() => {})
+
     Object.defineProperty(videoElement, 'poster', {
       value: '',
       writable: true,
-      configurable: true
+      configurable: true,
     })
 
-    // Mock event handlers
     eventHandlers = {
       onTimeUpdate: vi.fn(),
       onVolumeChange: vi.fn(),
@@ -41,50 +30,48 @@ describe('VideoController', () => {
       onEnded: vi.fn(),
       onLoadedMetadata: vi.fn(),
       onError: vi.fn(),
-      onFileLoaded: vi.fn()
+      onFileLoaded: vi.fn(),
     }
 
     controller = new VideoController(videoElement, eventHandlers, false)
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
   describe('Basic controls', () => {
     it('should play video when play() is called', async () => {
-      vi.useFakeTimers()
-      videoElement.src = 'test.mp4'
+      controller.setSource('test.mp4') // Set source to allow play
       const playPromise = controller.play()
       await vi.runAllTimersAsync()
       await playPromise
-      expect(mockPlay).toHaveBeenCalled()
-      vi.useRealTimers()
+      expect(videoElement.play).toHaveBeenCalled()
     })
 
     it('should pause video when pause() is called', () => {
       controller.pause()
-      expect(mockPause).toHaveBeenCalled()
+      expect(videoElement.pause).toHaveBeenCalled()
     })
 
     it('should toggle play/pause state', async () => {
-      vi.useFakeTimers()
-      videoElement.src = 'test.mp4'
+      controller.setSource('test.mp4')
       expect(controller.getIsPlaying()).toBe(false)
       
-      const togglePromise1 = controller.togglePlay()
+      // Toggle to play
+      await controller.togglePlay()
       await vi.runAllTimersAsync()
-      await togglePromise1
-      expect(mockPlay).toHaveBeenCalled()
-      
-      videoElement.dispatchEvent(new Event('play'))
+      videoElement.dispatchEvent(new Event('play')) // Simulate event
+      expect(videoElement.play).toHaveBeenCalled()
       expect(controller.getIsPlaying()).toBe(true)
       
-      const togglePromise2 = controller.togglePlay()
+      // Toggle to pause
+      await controller.togglePlay()
       await vi.runAllTimersAsync()
-      await togglePromise2
-      expect(mockPause).toHaveBeenCalled()
-      vi.useRealTimers()
+      videoElement.dispatchEvent(new Event('pause')) // Simulate event
+      expect(videoElement.pause).toHaveBeenCalled()
+      expect(controller.getIsPlaying()).toBe(false)
     })
 
     it('should set current time correctly', () => {
@@ -169,12 +156,25 @@ describe('VideoController', () => {
     })
 
     it('should set poster image', async () => {
-      vi.useFakeTimers()
       const thumb = 'http://example.com/thumb.jpg'
+      let onload: () => void = () => {}
+      
+      // Mock Image constructor to intercept onload
+      vi.spyOn(window, 'Image').mockImplementation(() => {
+        const img = new window.Image()
+        Object.defineProperty(img, 'onload', {
+          set(value) {
+            onload = value
+          },
+        })
+        return img
+      })
+
       controller.setPoster(thumb)
+      onload() // Manually trigger onload
       await vi.runAllTimersAsync()
+      
       expect(videoElement.poster).toBe(thumb)
-      vi.useRealTimers()
     })
   })
 
@@ -187,6 +187,7 @@ describe('VideoController', () => {
 
     it('should load video from file', async () => {
       await controller.loadVideoFile()
+      await vi.runAllTimersAsync()
       expect(Filesystem.selectFileWithPicker).toHaveBeenCalledWith('video/*')
       expect(eventHandlers.onFileLoaded).toHaveBeenCalled()
     })
@@ -194,6 +195,7 @@ describe('VideoController', () => {
     it('should load video from URL', async () => {
       const url = 'http://example.com/video.mp4'
       await controller.loadVideoFromUrl(url)
+      await vi.runAllTimersAsync()
       expect(videoElement.src).toContain(url)
     })
   })
@@ -290,9 +292,15 @@ describe('VideoController', () => {
     })
 
     it('should revoke blob URLs on destroy', async () => {
-      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL')
-      await controller.loadVideoFromUrl('blob:test-url')
+      const revokeSpy = vi.spyOn(Filesystem, 'revokeObjectURL')
+      vi.spyOn(Filesystem, 'selectFileWithPicker').mockResolvedValue(new File(['test'], 'video.mp4', { type: 'video/mp4' }))
+      
+      // This method internally creates a blob URL and stores it
+      await controller.loadVideoFile()
+      await vi.runAllTimersAsync()
+      
       controller.destroy()
+
       expect(revokeSpy).toHaveBeenCalledWith('blob:test-url')
     })
   })
