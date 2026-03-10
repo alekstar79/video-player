@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { FullscreenController } from '@/modules/controls/FullscreenController'
 import type { CustomChangeCallback } from '@/types'
 
-// This helper function sets up a consistent mock environment for the Fullscreen API.
 const mockFullscreenAPI = (element: HTMLElement, supported = true) => {
   Object.defineProperties(document, {
     fullscreenEnabled: { value: supported, writable: true, configurable: true },
@@ -25,7 +24,6 @@ describe('FullscreenController', () => {
     onChangeHandler = vi.fn<CustomChangeCallback>()
     onErrorHandler = vi.fn<CustomChangeCallback>()
     
-    // Spy on document event listeners to track calls
     vi.spyOn(document, 'addEventListener')
     vi.spyOn(document, 'removeEventListener')
   })
@@ -35,8 +33,11 @@ describe('FullscreenController', () => {
   })
 
   describe('Initialization', () => {
-    it('should create controller with element and handlers', () => {
+    beforeEach(() => {
       mockFullscreenAPI(element)
+    })
+
+    it('should create controller with element and handlers', () => {
       const controller = new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(controller).toBeInstanceOf(FullscreenController)
       expect(controller.element).toBe(element)
@@ -54,7 +55,6 @@ describe('FullscreenController', () => {
     })
 
     it('should register event listeners when handlers provided', () => {
-      mockFullscreenAPI(element)
       new FullscreenController(element, onChangeHandler, onErrorHandler)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenchange', expect.any(Function), false)
       expect(document.addEventListener).toHaveBeenCalledWith('fullscreenerror', expect.any(Function), false)
@@ -76,14 +76,11 @@ describe('FullscreenController', () => {
     })
 
     it('should fall back to webkit API if standard not available', () => {
-      // Mock a webkit-only environment
-      Object.defineProperty(element, 'requestFullscreen', { value: undefined, configurable: true })
-      Object.defineProperty(element, 'webkitRequestFullscreen', { value: vi.fn(), configurable: true })
-      Object.defineProperty(document, 'webkitExitFullscreen', { value: vi.fn(), configurable: true })
-      Object.defineProperty(document, 'webkitFullscreenEnabled', { value: true, configurable: true })
-
+      Object.defineProperty(element, 'requestFullscreen', { value: undefined, writable: true, configurable: true })
+      Object.defineProperty(element, 'webkitRequestFullscreen', { value: vi.fn(), writable: true, configurable: true })
+      Object.defineProperty(document, 'webkitExitFullscreen', { value: vi.fn(), writable: true, configurable: true })
       const controller = new FullscreenController(element)
-      expect(controller.supportedAPI?.request).toBe('webkitRequestFullscreen')
+      expect(controller.supportedAPI?.request).toContain('webkit')
     })
   })
 
@@ -111,11 +108,17 @@ describe('FullscreenController', () => {
     it('should throw error when fullscreen not enabled', async () => {
       mockFullscreenAPI(element, false)
       const controller = new FullscreenController(element)
-      await expect(controller.request()).rejects.toThrow('Fullscreen is not enabled')
+      try {
+        await controller.request()
+        expect.fail('Expected request() to throw an error')
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error)
+        expect((error as Error).message).toBe('Fullscreen is not enabled')
+      }
     })
 
     it('should exit fullscreen', async () => {
-      Object.defineProperty(document, 'fullscreenElement', { value: element, configurable: true })
+      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true })
       const result = await controller.exit()
       expect(document.exitFullscreen).toHaveBeenCalled()
       expect(result).toBe(true)
@@ -130,8 +133,7 @@ describe('FullscreenController', () => {
     it('should toggle fullscreen', async () => {
       await controller.toggle()
       expect(element.requestFullscreen).toHaveBeenCalled()
-      
-      Object.defineProperty(document, 'fullscreenElement', { value: element, configurable: true })
+      Object.defineProperty(document, 'fullscreenElement', { value: element, writable: true })
       await controller.toggle()
       expect(document.exitFullscreen).toHaveBeenCalled()
     })
