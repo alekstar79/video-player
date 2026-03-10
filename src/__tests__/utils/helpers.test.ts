@@ -118,7 +118,7 @@ describe('Helpers', () => {
       const mockFn = vi.fn().mockResolvedValue('result')
       const debouncedFn = Helpers.debounce(mockFn, 100)
       
-      // Call multiple times rapidly, explicitly ignore promises
+      // Call multiple times rapidly
       void debouncedFn('first')
       void debouncedFn('second')
       const promise = debouncedFn('third')
@@ -133,7 +133,7 @@ describe('Helpers', () => {
       expect(mockFn).toHaveBeenCalledTimes(1)
       expect(mockFn).toHaveBeenCalledWith('third')
       
-      // Check the promise resolution - no await needed before expect
+      // No await needed before expect
       expect(promise).resolves.toBe('result')
       
       vi.useRealTimers()
