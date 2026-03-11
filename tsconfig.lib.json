@@ -14,7 +14,7 @@
   "exclude": [
     "src/__tests__",
     "src/**/*.test.ts",
-    "src/main-ts.ts",
+    "src/main.ts",
     "src/main-vue.ts",
     "src/App.vue"
   ]
