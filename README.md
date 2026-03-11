@@ -21,8 +21,8 @@ playlist management, thumbnail generation, metadata extraction, and more._
   * [Features](#features)
   * [Installation](#installation)
   * [Usage](#usage)
-    * [Vanilla JavaScript / TypeScript](#vanilla-javascript--typescript)
-    * [Vue 3](#vue-3)
+    * [Vanilla JavaScript / TypeScript  [example]](#vanilla-javascript--typescript-example)
+    * [Vue 3  [example]](#vue-3-example)
   * [Configuration](#configuration)
     * [Player Options (`VideoPlayerConfig`)](#player-options-videoplayerconfig)
     * [`VideoSource` Object](#videosource-object)
@@ -80,13 +80,13 @@ npm install vue                        # for Vue wrapper
 
 ## Usage
 
-### Vanilla JavaScript / TypeScript
+### Vanilla JavaScript / TypeScript  [[example]](src/examples/vanilla)
 
 1. **Import the styles and register the custom elements**
 
 ```ts
-import '@alekstar79/video-player/lib/styles.css'
 import { registerComponents, createPlayer } from '@alekstar79/video-player'
+import '@alekstar79/video-player/lib/styles.css'
 
 // Register web components (required once)
 registerComponents()
@@ -118,7 +118,7 @@ const player = await createPlayer(container, {
 })
 ```
 
-### Vue 3
+### Vue 3  [[example]](src/examples/vue)
 
 ```vue
 <template>
