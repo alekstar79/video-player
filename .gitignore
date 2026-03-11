@@ -98,3 +98,6 @@ Thumbs.db
 
 # Vim swap files
 *.swp
+
+# Large files
+*.mp4
