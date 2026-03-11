@@ -42,10 +42,10 @@ export default defineConfig({
       formats: ['es']
     },
     rollupOptions: {
-      external: ['vue', '@alekstar79/context-menu'],
+      external: ['vue' /*, '@alekstar79/context-menu' */],
       output: {
         globals: {
-          '@alekstar79/context-menu': 'ContextMenu',
+          // '@alekstar79/context-menu': 'ContextMenu',
           vue: 'Vue'
         },
         entryFileNames: '[name].js',

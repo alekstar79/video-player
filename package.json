@@ -1,7 +1,7 @@
 {
   "name": "@alekstar79/video-player",
   "description": "Video player built with TypeScript and Vite",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "type": "module",
   "license": "MIT",
   "author": "Aleksey Tarasenko <alekstar79@yandex.ru>",
