@@ -16,10 +16,11 @@ export default defineConfig({
     vue(),
     viteStaticCopy({
       targets: [
-        {
-          src: 'public/posters',
-          dest: ''
-        }
+        { src: 'public/favicon.png', dest: '' },
+        { src: 'public/icons.svg', dest: '' },
+        { src: 'public/posters',  dest: '' },
+        { src: 'public/GalaxyNebula.mp4', dest: '' },
+        { src: 'public/Synthwave.mp4', dest: '' }
       ]
     })
   ],
